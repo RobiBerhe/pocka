@@ -13,5 +13,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  bot:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://pocka_user:pocka_password@db:5432/pocka_db?sslmode=disable
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - PORT=8080
+      - ENVIRONMENT=production
+    depends_on:
+      - db
+    restart: always
+
 volumes:
   postgres_data:
