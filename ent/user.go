@@ -34,6 +34,14 @@ type User struct {
 	CurrentStreak int `json:"current_streak,omitempty"`
 	// The ID of the user who referred this user
 	ReferredBy *uuid.UUID `json:"referred_by,omitempty"`
+	// User's preferred full name
+	FullName string `json:"full_name,omitempty"`
+	// User's phone number
+	PhoneNumber string `json:"phone_number,omitempty"`
+	// Current step in the onboarding flow
+	OnboardingState string `json:"onboarding_state,omitempty"`
+	// Whether the user has completed onboarding
+	OnboardingCompleted bool `json:"onboarding_completed,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -67,11 +75,11 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldReferredBy:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case user.FieldIsPremium:
+		case user.FieldIsPremium, user.FieldOnboardingCompleted:
 			values[i] = new(sql.NullBool)
 		case user.FieldTelegramID, user.FieldCurrentStreak:
 			values[i] = new(sql.NullInt64)
-		case user.FieldUsername, user.FieldTimezone, user.FieldCurrency, user.FieldLanguage:
+		case user.FieldUsername, user.FieldTimezone, user.FieldCurrency, user.FieldLanguage, user.FieldFullName, user.FieldPhoneNumber, user.FieldOnboardingState:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -147,6 +155,30 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				_m.ReferredBy = new(uuid.UUID)
 				*_m.ReferredBy = *value.S.(*uuid.UUID)
 			}
+		case user.FieldFullName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field full_name", values[i])
+			} else if value.Valid {
+				_m.FullName = value.String
+			}
+		case user.FieldPhoneNumber:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field phone_number", values[i])
+			} else if value.Valid {
+				_m.PhoneNumber = value.String
+			}
+		case user.FieldOnboardingState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field onboarding_state", values[i])
+			} else if value.Valid {
+				_m.OnboardingState = value.String
+			}
+		case user.FieldOnboardingCompleted:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field onboarding_completed", values[i])
+			} else if value.Valid {
+				_m.OnboardingCompleted = value.Bool
+			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -219,6 +251,18 @@ func (_m *User) String() string {
 		builder.WriteString("referred_by=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("full_name=")
+	builder.WriteString(_m.FullName)
+	builder.WriteString(", ")
+	builder.WriteString("phone_number=")
+	builder.WriteString(_m.PhoneNumber)
+	builder.WriteString(", ")
+	builder.WriteString("onboarding_state=")
+	builder.WriteString(_m.OnboardingState)
+	builder.WriteString(", ")
+	builder.WriteString("onboarding_completed=")
+	builder.WriteString(fmt.Sprintf("%v", _m.OnboardingCompleted))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

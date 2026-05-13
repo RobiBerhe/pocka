@@ -12,6 +12,16 @@ const (
 	TransactionTypeExpense TransactionType = "EXPENSE"
 )
 
+type OnboardingState string
+
+const (
+	OnboardingStateAwaitingName     OnboardingState = "AWAITING_NAME"
+	OnboardingStateAwaitingLanguage OnboardingState = "AWAITING_LANGUAGE"
+	OnboardingStateAwaitingCurrency OnboardingState = "AWAITING_CURRENCY"
+	OnboardingStateAwaitingContact  OnboardingState = "AWAITING_CONTACT"
+	OnboardingStateCompleted        OnboardingState = "COMPLETED"
+)
+
 type ParsedTransaction struct {
 	Amount      float64
 	Type        TransactionType

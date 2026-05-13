@@ -51,8 +51,16 @@ func init() {
 	userDescCurrentStreak := userFields[7].Descriptor()
 	// user.DefaultCurrentStreak holds the default value on creation for the current_streak field.
 	user.DefaultCurrentStreak = userDescCurrentStreak.Default.(int)
+	// userDescOnboardingState is the schema descriptor for onboarding_state field.
+	userDescOnboardingState := userFields[11].Descriptor()
+	// user.DefaultOnboardingState holds the default value on creation for the onboarding_state field.
+	user.DefaultOnboardingState = userDescOnboardingState.Default.(string)
+	// userDescOnboardingCompleted is the schema descriptor for onboarding_completed field.
+	userDescOnboardingCompleted := userFields[12].Descriptor()
+	// user.DefaultOnboardingCompleted holds the default value on creation for the onboarding_completed field.
+	user.DefaultOnboardingCompleted = userDescOnboardingCompleted.Default.(bool)
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[9].Descriptor()
+	userDescCreatedAt := userFields[13].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 	// userDescID is the schema descriptor for id field.

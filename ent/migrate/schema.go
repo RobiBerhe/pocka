@@ -45,6 +45,10 @@ var (
 		{Name: "is_premium", Type: field.TypeBool, Default: false},
 		{Name: "current_streak", Type: field.TypeInt, Default: 0},
 		{Name: "referred_by", Type: field.TypeUUID, Nullable: true},
+		{Name: "full_name", Type: field.TypeString, Nullable: true},
+		{Name: "phone_number", Type: field.TypeString, Nullable: true},
+		{Name: "onboarding_state", Type: field.TypeString, Default: "AWAITING_NAME"},
+		{Name: "onboarding_completed", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// UsersTable holds the schema information for the "users" table.

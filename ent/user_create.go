@@ -126,6 +126,62 @@ func (_c *UserCreate) SetNillableReferredBy(v *uuid.UUID) *UserCreate {
 	return _c
 }
 
+// SetFullName sets the "full_name" field.
+func (_c *UserCreate) SetFullName(v string) *UserCreate {
+	_c.mutation.SetFullName(v)
+	return _c
+}
+
+// SetNillableFullName sets the "full_name" field if the given value is not nil.
+func (_c *UserCreate) SetNillableFullName(v *string) *UserCreate {
+	if v != nil {
+		_c.SetFullName(*v)
+	}
+	return _c
+}
+
+// SetPhoneNumber sets the "phone_number" field.
+func (_c *UserCreate) SetPhoneNumber(v string) *UserCreate {
+	_c.mutation.SetPhoneNumber(v)
+	return _c
+}
+
+// SetNillablePhoneNumber sets the "phone_number" field if the given value is not nil.
+func (_c *UserCreate) SetNillablePhoneNumber(v *string) *UserCreate {
+	if v != nil {
+		_c.SetPhoneNumber(*v)
+	}
+	return _c
+}
+
+// SetOnboardingState sets the "onboarding_state" field.
+func (_c *UserCreate) SetOnboardingState(v string) *UserCreate {
+	_c.mutation.SetOnboardingState(v)
+	return _c
+}
+
+// SetNillableOnboardingState sets the "onboarding_state" field if the given value is not nil.
+func (_c *UserCreate) SetNillableOnboardingState(v *string) *UserCreate {
+	if v != nil {
+		_c.SetOnboardingState(*v)
+	}
+	return _c
+}
+
+// SetOnboardingCompleted sets the "onboarding_completed" field.
+func (_c *UserCreate) SetOnboardingCompleted(v bool) *UserCreate {
+	_c.mutation.SetOnboardingCompleted(v)
+	return _c
+}
+
+// SetNillableOnboardingCompleted sets the "onboarding_completed" field if the given value is not nil.
+func (_c *UserCreate) SetNillableOnboardingCompleted(v *bool) *UserCreate {
+	if v != nil {
+		_c.SetOnboardingCompleted(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *UserCreate) SetCreatedAt(v time.Time) *UserCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -224,6 +280,14 @@ func (_c *UserCreate) defaults() {
 		v := user.DefaultCurrentStreak
 		_c.mutation.SetCurrentStreak(v)
 	}
+	if _, ok := _c.mutation.OnboardingState(); !ok {
+		v := user.DefaultOnboardingState
+		_c.mutation.SetOnboardingState(v)
+	}
+	if _, ok := _c.mutation.OnboardingCompleted(); !ok {
+		v := user.DefaultOnboardingCompleted
+		_c.mutation.SetOnboardingCompleted(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := user.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -253,6 +317,12 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.CurrentStreak(); !ok {
 		return &ValidationError{Name: "current_streak", err: errors.New(`ent: missing required field "User.current_streak"`)}
+	}
+	if _, ok := _c.mutation.OnboardingState(); !ok {
+		return &ValidationError{Name: "onboarding_state", err: errors.New(`ent: missing required field "User.onboarding_state"`)}
+	}
+	if _, ok := _c.mutation.OnboardingCompleted(); !ok {
+		return &ValidationError{Name: "onboarding_completed", err: errors.New(`ent: missing required field "User.onboarding_completed"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
@@ -323,6 +393,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ReferredBy(); ok {
 		_spec.SetField(user.FieldReferredBy, field.TypeUUID, value)
 		_node.ReferredBy = &value
+	}
+	if value, ok := _c.mutation.FullName(); ok {
+		_spec.SetField(user.FieldFullName, field.TypeString, value)
+		_node.FullName = value
+	}
+	if value, ok := _c.mutation.PhoneNumber(); ok {
+		_spec.SetField(user.FieldPhoneNumber, field.TypeString, value)
+		_node.PhoneNumber = value
+	}
+	if value, ok := _c.mutation.OnboardingState(); ok {
+		_spec.SetField(user.FieldOnboardingState, field.TypeString, value)
+		_node.OnboardingState = value
+	}
+	if value, ok := _c.mutation.OnboardingCompleted(); ok {
+		_spec.SetField(user.FieldOnboardingCompleted, field.TypeBool, value)
+		_node.OnboardingCompleted = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

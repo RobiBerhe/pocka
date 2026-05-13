@@ -814,27 +814,31 @@ func (m *TransactionMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *uuid.UUID
-	telegram_id         *int64
-	addtelegram_id      *int64
-	username            *string
-	timezone            *string
-	currency            *string
-	language            *string
-	is_premium          *bool
-	current_streak      *int
-	addcurrent_streak   *int
-	referred_by         *uuid.UUID
-	created_at          *time.Time
-	clearedFields       map[string]struct{}
-	transactions        map[uuid.UUID]struct{}
-	removedtransactions map[uuid.UUID]struct{}
-	clearedtransactions bool
-	done                bool
-	oldValue            func(context.Context) (*User, error)
-	predicates          []predicate.User
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	telegram_id          *int64
+	addtelegram_id       *int64
+	username             *string
+	timezone             *string
+	currency             *string
+	language             *string
+	is_premium           *bool
+	current_streak       *int
+	addcurrent_streak    *int
+	referred_by          *uuid.UUID
+	full_name            *string
+	phone_number         *string
+	onboarding_state     *string
+	onboarding_completed *bool
+	created_at           *time.Time
+	clearedFields        map[string]struct{}
+	transactions         map[uuid.UUID]struct{}
+	removedtransactions  map[uuid.UUID]struct{}
+	clearedtransactions  bool
+	done                 bool
+	oldValue             func(context.Context) (*User, error)
+	predicates           []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -1295,6 +1299,176 @@ func (m *UserMutation) ResetReferredBy() {
 	delete(m.clearedFields, user.FieldReferredBy)
 }
 
+// SetFullName sets the "full_name" field.
+func (m *UserMutation) SetFullName(s string) {
+	m.full_name = &s
+}
+
+// FullName returns the value of the "full_name" field in the mutation.
+func (m *UserMutation) FullName() (r string, exists bool) {
+	v := m.full_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFullName returns the old "full_name" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldFullName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFullName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFullName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFullName: %w", err)
+	}
+	return oldValue.FullName, nil
+}
+
+// ClearFullName clears the value of the "full_name" field.
+func (m *UserMutation) ClearFullName() {
+	m.full_name = nil
+	m.clearedFields[user.FieldFullName] = struct{}{}
+}
+
+// FullNameCleared returns if the "full_name" field was cleared in this mutation.
+func (m *UserMutation) FullNameCleared() bool {
+	_, ok := m.clearedFields[user.FieldFullName]
+	return ok
+}
+
+// ResetFullName resets all changes to the "full_name" field.
+func (m *UserMutation) ResetFullName() {
+	m.full_name = nil
+	delete(m.clearedFields, user.FieldFullName)
+}
+
+// SetPhoneNumber sets the "phone_number" field.
+func (m *UserMutation) SetPhoneNumber(s string) {
+	m.phone_number = &s
+}
+
+// PhoneNumber returns the value of the "phone_number" field in the mutation.
+func (m *UserMutation) PhoneNumber() (r string, exists bool) {
+	v := m.phone_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhoneNumber returns the old "phone_number" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPhoneNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhoneNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhoneNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhoneNumber: %w", err)
+	}
+	return oldValue.PhoneNumber, nil
+}
+
+// ClearPhoneNumber clears the value of the "phone_number" field.
+func (m *UserMutation) ClearPhoneNumber() {
+	m.phone_number = nil
+	m.clearedFields[user.FieldPhoneNumber] = struct{}{}
+}
+
+// PhoneNumberCleared returns if the "phone_number" field was cleared in this mutation.
+func (m *UserMutation) PhoneNumberCleared() bool {
+	_, ok := m.clearedFields[user.FieldPhoneNumber]
+	return ok
+}
+
+// ResetPhoneNumber resets all changes to the "phone_number" field.
+func (m *UserMutation) ResetPhoneNumber() {
+	m.phone_number = nil
+	delete(m.clearedFields, user.FieldPhoneNumber)
+}
+
+// SetOnboardingState sets the "onboarding_state" field.
+func (m *UserMutation) SetOnboardingState(s string) {
+	m.onboarding_state = &s
+}
+
+// OnboardingState returns the value of the "onboarding_state" field in the mutation.
+func (m *UserMutation) OnboardingState() (r string, exists bool) {
+	v := m.onboarding_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOnboardingState returns the old "onboarding_state" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldOnboardingState(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOnboardingState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOnboardingState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOnboardingState: %w", err)
+	}
+	return oldValue.OnboardingState, nil
+}
+
+// ResetOnboardingState resets all changes to the "onboarding_state" field.
+func (m *UserMutation) ResetOnboardingState() {
+	m.onboarding_state = nil
+}
+
+// SetOnboardingCompleted sets the "onboarding_completed" field.
+func (m *UserMutation) SetOnboardingCompleted(b bool) {
+	m.onboarding_completed = &b
+}
+
+// OnboardingCompleted returns the value of the "onboarding_completed" field in the mutation.
+func (m *UserMutation) OnboardingCompleted() (r bool, exists bool) {
+	v := m.onboarding_completed
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOnboardingCompleted returns the old "onboarding_completed" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldOnboardingCompleted(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOnboardingCompleted is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOnboardingCompleted requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOnboardingCompleted: %w", err)
+	}
+	return oldValue.OnboardingCompleted, nil
+}
+
+// ResetOnboardingCompleted resets all changes to the "onboarding_completed" field.
+func (m *UserMutation) ResetOnboardingCompleted() {
+	m.onboarding_completed = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *UserMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -1419,7 +1593,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 13)
 	if m.telegram_id != nil {
 		fields = append(fields, user.FieldTelegramID)
 	}
@@ -1443,6 +1617,18 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.referred_by != nil {
 		fields = append(fields, user.FieldReferredBy)
+	}
+	if m.full_name != nil {
+		fields = append(fields, user.FieldFullName)
+	}
+	if m.phone_number != nil {
+		fields = append(fields, user.FieldPhoneNumber)
+	}
+	if m.onboarding_state != nil {
+		fields = append(fields, user.FieldOnboardingState)
+	}
+	if m.onboarding_completed != nil {
+		fields = append(fields, user.FieldOnboardingCompleted)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
@@ -1471,6 +1657,14 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CurrentStreak()
 	case user.FieldReferredBy:
 		return m.ReferredBy()
+	case user.FieldFullName:
+		return m.FullName()
+	case user.FieldPhoneNumber:
+		return m.PhoneNumber()
+	case user.FieldOnboardingState:
+		return m.OnboardingState()
+	case user.FieldOnboardingCompleted:
+		return m.OnboardingCompleted()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -1498,6 +1692,14 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCurrentStreak(ctx)
 	case user.FieldReferredBy:
 		return m.OldReferredBy(ctx)
+	case user.FieldFullName:
+		return m.OldFullName(ctx)
+	case user.FieldPhoneNumber:
+		return m.OldPhoneNumber(ctx)
+	case user.FieldOnboardingState:
+		return m.OldOnboardingState(ctx)
+	case user.FieldOnboardingCompleted:
+		return m.OldOnboardingCompleted(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -1564,6 +1766,34 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetReferredBy(v)
+		return nil
+	case user.FieldFullName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFullName(v)
+		return nil
+	case user.FieldPhoneNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhoneNumber(v)
+		return nil
+	case user.FieldOnboardingState:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOnboardingState(v)
+		return nil
+	case user.FieldOnboardingCompleted:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOnboardingCompleted(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1635,6 +1865,12 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldReferredBy) {
 		fields = append(fields, user.FieldReferredBy)
 	}
+	if m.FieldCleared(user.FieldFullName) {
+		fields = append(fields, user.FieldFullName)
+	}
+	if m.FieldCleared(user.FieldPhoneNumber) {
+		fields = append(fields, user.FieldPhoneNumber)
+	}
 	return fields
 }
 
@@ -1654,6 +1890,12 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldReferredBy:
 		m.ClearReferredBy()
+		return nil
+	case user.FieldFullName:
+		m.ClearFullName()
+		return nil
+	case user.FieldPhoneNumber:
+		m.ClearPhoneNumber()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -1686,6 +1928,18 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldReferredBy:
 		m.ResetReferredBy()
+		return nil
+	case user.FieldFullName:
+		m.ResetFullName()
+		return nil
+	case user.FieldPhoneNumber:
+		m.ResetPhoneNumber()
+		return nil
+	case user.FieldOnboardingState:
+		m.ResetOnboardingState()
+		return nil
+	case user.FieldOnboardingCompleted:
+		m.ResetOnboardingCompleted()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()

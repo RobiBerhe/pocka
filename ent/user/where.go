@@ -96,6 +96,26 @@ func ReferredBy(v uuid.UUID) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldReferredBy, v))
 }
 
+// FullName applies equality check predicate on the "full_name" field. It's identical to FullNameEQ.
+func FullName(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldFullName, v))
+}
+
+// PhoneNumber applies equality check predicate on the "phone_number" field. It's identical to PhoneNumberEQ.
+func PhoneNumber(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPhoneNumber, v))
+}
+
+// OnboardingState applies equality check predicate on the "onboarding_state" field. It's identical to OnboardingStateEQ.
+func OnboardingState(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldOnboardingState, v))
+}
+
+// OnboardingCompleted applies equality check predicate on the "onboarding_completed" field. It's identical to OnboardingCompletedEQ.
+func OnboardingCompleted(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldOnboardingCompleted, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
@@ -509,6 +529,231 @@ func ReferredByIsNil() predicate.User {
 // ReferredByNotNil applies the NotNil predicate on the "referred_by" field.
 func ReferredByNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldReferredBy))
+}
+
+// FullNameEQ applies the EQ predicate on the "full_name" field.
+func FullNameEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldFullName, v))
+}
+
+// FullNameNEQ applies the NEQ predicate on the "full_name" field.
+func FullNameNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldFullName, v))
+}
+
+// FullNameIn applies the In predicate on the "full_name" field.
+func FullNameIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldFullName, vs...))
+}
+
+// FullNameNotIn applies the NotIn predicate on the "full_name" field.
+func FullNameNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldFullName, vs...))
+}
+
+// FullNameGT applies the GT predicate on the "full_name" field.
+func FullNameGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldFullName, v))
+}
+
+// FullNameGTE applies the GTE predicate on the "full_name" field.
+func FullNameGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldFullName, v))
+}
+
+// FullNameLT applies the LT predicate on the "full_name" field.
+func FullNameLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldFullName, v))
+}
+
+// FullNameLTE applies the LTE predicate on the "full_name" field.
+func FullNameLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldFullName, v))
+}
+
+// FullNameContains applies the Contains predicate on the "full_name" field.
+func FullNameContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldFullName, v))
+}
+
+// FullNameHasPrefix applies the HasPrefix predicate on the "full_name" field.
+func FullNameHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldFullName, v))
+}
+
+// FullNameHasSuffix applies the HasSuffix predicate on the "full_name" field.
+func FullNameHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldFullName, v))
+}
+
+// FullNameIsNil applies the IsNil predicate on the "full_name" field.
+func FullNameIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldFullName))
+}
+
+// FullNameNotNil applies the NotNil predicate on the "full_name" field.
+func FullNameNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldFullName))
+}
+
+// FullNameEqualFold applies the EqualFold predicate on the "full_name" field.
+func FullNameEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldFullName, v))
+}
+
+// FullNameContainsFold applies the ContainsFold predicate on the "full_name" field.
+func FullNameContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldFullName, v))
+}
+
+// PhoneNumberEQ applies the EQ predicate on the "phone_number" field.
+func PhoneNumberEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPhoneNumber, v))
+}
+
+// PhoneNumberNEQ applies the NEQ predicate on the "phone_number" field.
+func PhoneNumberNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldPhoneNumber, v))
+}
+
+// PhoneNumberIn applies the In predicate on the "phone_number" field.
+func PhoneNumberIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldPhoneNumber, vs...))
+}
+
+// PhoneNumberNotIn applies the NotIn predicate on the "phone_number" field.
+func PhoneNumberNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldPhoneNumber, vs...))
+}
+
+// PhoneNumberGT applies the GT predicate on the "phone_number" field.
+func PhoneNumberGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldPhoneNumber, v))
+}
+
+// PhoneNumberGTE applies the GTE predicate on the "phone_number" field.
+func PhoneNumberGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldPhoneNumber, v))
+}
+
+// PhoneNumberLT applies the LT predicate on the "phone_number" field.
+func PhoneNumberLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldPhoneNumber, v))
+}
+
+// PhoneNumberLTE applies the LTE predicate on the "phone_number" field.
+func PhoneNumberLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldPhoneNumber, v))
+}
+
+// PhoneNumberContains applies the Contains predicate on the "phone_number" field.
+func PhoneNumberContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldPhoneNumber, v))
+}
+
+// PhoneNumberHasPrefix applies the HasPrefix predicate on the "phone_number" field.
+func PhoneNumberHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldPhoneNumber, v))
+}
+
+// PhoneNumberHasSuffix applies the HasSuffix predicate on the "phone_number" field.
+func PhoneNumberHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldPhoneNumber, v))
+}
+
+// PhoneNumberIsNil applies the IsNil predicate on the "phone_number" field.
+func PhoneNumberIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldPhoneNumber))
+}
+
+// PhoneNumberNotNil applies the NotNil predicate on the "phone_number" field.
+func PhoneNumberNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldPhoneNumber))
+}
+
+// PhoneNumberEqualFold applies the EqualFold predicate on the "phone_number" field.
+func PhoneNumberEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldPhoneNumber, v))
+}
+
+// PhoneNumberContainsFold applies the ContainsFold predicate on the "phone_number" field.
+func PhoneNumberContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldPhoneNumber, v))
+}
+
+// OnboardingStateEQ applies the EQ predicate on the "onboarding_state" field.
+func OnboardingStateEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldOnboardingState, v))
+}
+
+// OnboardingStateNEQ applies the NEQ predicate on the "onboarding_state" field.
+func OnboardingStateNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldOnboardingState, v))
+}
+
+// OnboardingStateIn applies the In predicate on the "onboarding_state" field.
+func OnboardingStateIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldOnboardingState, vs...))
+}
+
+// OnboardingStateNotIn applies the NotIn predicate on the "onboarding_state" field.
+func OnboardingStateNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldOnboardingState, vs...))
+}
+
+// OnboardingStateGT applies the GT predicate on the "onboarding_state" field.
+func OnboardingStateGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldOnboardingState, v))
+}
+
+// OnboardingStateGTE applies the GTE predicate on the "onboarding_state" field.
+func OnboardingStateGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldOnboardingState, v))
+}
+
+// OnboardingStateLT applies the LT predicate on the "onboarding_state" field.
+func OnboardingStateLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldOnboardingState, v))
+}
+
+// OnboardingStateLTE applies the LTE predicate on the "onboarding_state" field.
+func OnboardingStateLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldOnboardingState, v))
+}
+
+// OnboardingStateContains applies the Contains predicate on the "onboarding_state" field.
+func OnboardingStateContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldOnboardingState, v))
+}
+
+// OnboardingStateHasPrefix applies the HasPrefix predicate on the "onboarding_state" field.
+func OnboardingStateHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldOnboardingState, v))
+}
+
+// OnboardingStateHasSuffix applies the HasSuffix predicate on the "onboarding_state" field.
+func OnboardingStateHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldOnboardingState, v))
+}
+
+// OnboardingStateEqualFold applies the EqualFold predicate on the "onboarding_state" field.
+func OnboardingStateEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldOnboardingState, v))
+}
+
+// OnboardingStateContainsFold applies the ContainsFold predicate on the "onboarding_state" field.
+func OnboardingStateContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldOnboardingState, v))
+}
+
+// OnboardingCompletedEQ applies the EQ predicate on the "onboarding_completed" field.
+func OnboardingCompletedEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldOnboardingCompleted, v))
+}
+
+// OnboardingCompletedNEQ applies the NEQ predicate on the "onboarding_completed" field.
+func OnboardingCompletedNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldOnboardingCompleted, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

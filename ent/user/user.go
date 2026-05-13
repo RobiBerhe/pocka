@@ -31,6 +31,14 @@ const (
 	FieldCurrentStreak = "current_streak"
 	// FieldReferredBy holds the string denoting the referred_by field in the database.
 	FieldReferredBy = "referred_by"
+	// FieldFullName holds the string denoting the full_name field in the database.
+	FieldFullName = "full_name"
+	// FieldPhoneNumber holds the string denoting the phone_number field in the database.
+	FieldPhoneNumber = "phone_number"
+	// FieldOnboardingState holds the string denoting the onboarding_state field in the database.
+	FieldOnboardingState = "onboarding_state"
+	// FieldOnboardingCompleted holds the string denoting the onboarding_completed field in the database.
+	FieldOnboardingCompleted = "onboarding_completed"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
@@ -57,6 +65,10 @@ var Columns = []string{
 	FieldIsPremium,
 	FieldCurrentStreak,
 	FieldReferredBy,
+	FieldFullName,
+	FieldPhoneNumber,
+	FieldOnboardingState,
+	FieldOnboardingCompleted,
 	FieldCreatedAt,
 }
 
@@ -81,6 +93,10 @@ var (
 	DefaultIsPremium bool
 	// DefaultCurrentStreak holds the default value on creation for the "current_streak" field.
 	DefaultCurrentStreak int
+	// DefaultOnboardingState holds the default value on creation for the "onboarding_state" field.
+	DefaultOnboardingState string
+	// DefaultOnboardingCompleted holds the default value on creation for the "onboarding_completed" field.
+	DefaultOnboardingCompleted bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
@@ -133,6 +149,26 @@ func ByCurrentStreak(opts ...sql.OrderTermOption) OrderOption {
 // ByReferredBy orders the results by the referred_by field.
 func ByReferredBy(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReferredBy, opts...).ToFunc()
+}
+
+// ByFullName orders the results by the full_name field.
+func ByFullName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFullName, opts...).ToFunc()
+}
+
+// ByPhoneNumber orders the results by the phone_number field.
+func ByPhoneNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPhoneNumber, opts...).ToFunc()
+}
+
+// ByOnboardingState orders the results by the onboarding_state field.
+func ByOnboardingState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOnboardingState, opts...).ToFunc()
+}
+
+// ByOnboardingCompleted orders the results by the onboarding_completed field.
+func ByOnboardingCompleted(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOnboardingCompleted, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

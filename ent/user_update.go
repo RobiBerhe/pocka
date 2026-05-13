@@ -167,6 +167,74 @@ func (_u *UserUpdate) ClearReferredBy() *UserUpdate {
 	return _u
 }
 
+// SetFullName sets the "full_name" field.
+func (_u *UserUpdate) SetFullName(v string) *UserUpdate {
+	_u.mutation.SetFullName(v)
+	return _u
+}
+
+// SetNillableFullName sets the "full_name" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableFullName(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetFullName(*v)
+	}
+	return _u
+}
+
+// ClearFullName clears the value of the "full_name" field.
+func (_u *UserUpdate) ClearFullName() *UserUpdate {
+	_u.mutation.ClearFullName()
+	return _u
+}
+
+// SetPhoneNumber sets the "phone_number" field.
+func (_u *UserUpdate) SetPhoneNumber(v string) *UserUpdate {
+	_u.mutation.SetPhoneNumber(v)
+	return _u
+}
+
+// SetNillablePhoneNumber sets the "phone_number" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePhoneNumber(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetPhoneNumber(*v)
+	}
+	return _u
+}
+
+// ClearPhoneNumber clears the value of the "phone_number" field.
+func (_u *UserUpdate) ClearPhoneNumber() *UserUpdate {
+	_u.mutation.ClearPhoneNumber()
+	return _u
+}
+
+// SetOnboardingState sets the "onboarding_state" field.
+func (_u *UserUpdate) SetOnboardingState(v string) *UserUpdate {
+	_u.mutation.SetOnboardingState(v)
+	return _u
+}
+
+// SetNillableOnboardingState sets the "onboarding_state" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableOnboardingState(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetOnboardingState(*v)
+	}
+	return _u
+}
+
+// SetOnboardingCompleted sets the "onboarding_completed" field.
+func (_u *UserUpdate) SetOnboardingCompleted(v bool) *UserUpdate {
+	_u.mutation.SetOnboardingCompleted(v)
+	return _u
+}
+
+// SetNillableOnboardingCompleted sets the "onboarding_completed" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableOnboardingCompleted(v *bool) *UserUpdate {
+	if v != nil {
+		_u.SetOnboardingCompleted(*v)
+	}
+	return _u
+}
+
 // AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
 func (_u *UserUpdate) AddTransactionIDs(ids ...uuid.UUID) *UserUpdate {
 	_u.mutation.AddTransactionIDs(ids...)
@@ -279,6 +347,24 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ReferredByCleared() {
 		_spec.ClearField(user.FieldReferredBy, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.FullName(); ok {
+		_spec.SetField(user.FieldFullName, field.TypeString, value)
+	}
+	if _u.mutation.FullNameCleared() {
+		_spec.ClearField(user.FieldFullName, field.TypeString)
+	}
+	if value, ok := _u.mutation.PhoneNumber(); ok {
+		_spec.SetField(user.FieldPhoneNumber, field.TypeString, value)
+	}
+	if _u.mutation.PhoneNumberCleared() {
+		_spec.ClearField(user.FieldPhoneNumber, field.TypeString)
+	}
+	if value, ok := _u.mutation.OnboardingState(); ok {
+		_spec.SetField(user.FieldOnboardingState, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.OnboardingCompleted(); ok {
+		_spec.SetField(user.FieldOnboardingCompleted, field.TypeBool, value)
 	}
 	if _u.mutation.TransactionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -483,6 +569,74 @@ func (_u *UserUpdateOne) ClearReferredBy() *UserUpdateOne {
 	return _u
 }
 
+// SetFullName sets the "full_name" field.
+func (_u *UserUpdateOne) SetFullName(v string) *UserUpdateOne {
+	_u.mutation.SetFullName(v)
+	return _u
+}
+
+// SetNillableFullName sets the "full_name" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableFullName(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetFullName(*v)
+	}
+	return _u
+}
+
+// ClearFullName clears the value of the "full_name" field.
+func (_u *UserUpdateOne) ClearFullName() *UserUpdateOne {
+	_u.mutation.ClearFullName()
+	return _u
+}
+
+// SetPhoneNumber sets the "phone_number" field.
+func (_u *UserUpdateOne) SetPhoneNumber(v string) *UserUpdateOne {
+	_u.mutation.SetPhoneNumber(v)
+	return _u
+}
+
+// SetNillablePhoneNumber sets the "phone_number" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePhoneNumber(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetPhoneNumber(*v)
+	}
+	return _u
+}
+
+// ClearPhoneNumber clears the value of the "phone_number" field.
+func (_u *UserUpdateOne) ClearPhoneNumber() *UserUpdateOne {
+	_u.mutation.ClearPhoneNumber()
+	return _u
+}
+
+// SetOnboardingState sets the "onboarding_state" field.
+func (_u *UserUpdateOne) SetOnboardingState(v string) *UserUpdateOne {
+	_u.mutation.SetOnboardingState(v)
+	return _u
+}
+
+// SetNillableOnboardingState sets the "onboarding_state" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableOnboardingState(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetOnboardingState(*v)
+	}
+	return _u
+}
+
+// SetOnboardingCompleted sets the "onboarding_completed" field.
+func (_u *UserUpdateOne) SetOnboardingCompleted(v bool) *UserUpdateOne {
+	_u.mutation.SetOnboardingCompleted(v)
+	return _u
+}
+
+// SetNillableOnboardingCompleted sets the "onboarding_completed" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableOnboardingCompleted(v *bool) *UserUpdateOne {
+	if v != nil {
+		_u.SetOnboardingCompleted(*v)
+	}
+	return _u
+}
+
 // AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
 func (_u *UserUpdateOne) AddTransactionIDs(ids ...uuid.UUID) *UserUpdateOne {
 	_u.mutation.AddTransactionIDs(ids...)
@@ -625,6 +779,24 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.ReferredByCleared() {
 		_spec.ClearField(user.FieldReferredBy, field.TypeUUID)
+	}
+	if value, ok := _u.mutation.FullName(); ok {
+		_spec.SetField(user.FieldFullName, field.TypeString, value)
+	}
+	if _u.mutation.FullNameCleared() {
+		_spec.ClearField(user.FieldFullName, field.TypeString)
+	}
+	if value, ok := _u.mutation.PhoneNumber(); ok {
+		_spec.SetField(user.FieldPhoneNumber, field.TypeString, value)
+	}
+	if _u.mutation.PhoneNumberCleared() {
+		_spec.ClearField(user.FieldPhoneNumber, field.TypeString)
+	}
+	if value, ok := _u.mutation.OnboardingState(); ok {
+		_spec.SetField(user.FieldOnboardingState, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.OnboardingCompleted(); ok {
+		_spec.SetField(user.FieldOnboardingCompleted, field.TypeBool, value)
 	}
 	if _u.mutation.TransactionsCleared() {
 		edge := &sqlgraph.EdgeSpec{

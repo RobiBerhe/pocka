@@ -43,6 +43,18 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Comment("The ID of the user who referred this user"),
+		field.String("full_name").
+			Optional().
+			Comment("User's preferred full name"),
+		field.String("phone_number").
+			Optional().
+			Comment("User's phone number"),
+		field.String("onboarding_state").
+			Default("AWAITING_NAME").
+			Comment("Current step in the onboarding flow"),
+		field.Bool("onboarding_completed").
+			Default(false).
+			Comment("Whether the user has completed onboarding"),
 		field.Time("created_at").
 			Default(func() time.Time {
 				return time.Now().UTC()
