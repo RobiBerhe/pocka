@@ -551,21 +551,21 @@ func CreatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldCreatedAt, v))
 }
 
-// HasExpenses applies the HasEdge predicate on the "expenses" edge.
-func HasExpenses() predicate.User {
+// HasTransactions applies the HasEdge predicate on the "transactions" edge.
+func HasTransactions() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ExpensesTable, ExpensesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasExpensesWith applies the HasEdge predicate on the "expenses" edge with a given conditions (other predicates).
-func HasExpensesWith(preds ...predicate.Expense) predicate.User {
+// HasTransactionsWith applies the HasEdge predicate on the "transactions" edge with a given conditions (other predicates).
+func HasTransactionsWith(preds ...predicate.Transaction) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newExpensesStep()
+		step := newTransactionsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

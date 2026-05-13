@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"pocka/ent/expense"
 	"pocka/ent/schema"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"time"
 
@@ -15,20 +15,20 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	expenseFields := schema.Expense{}.Fields()
-	_ = expenseFields
-	// expenseDescCurrency is the schema descriptor for currency field.
-	expenseDescCurrency := expenseFields[2].Descriptor()
-	// expense.DefaultCurrency holds the default value on creation for the currency field.
-	expense.DefaultCurrency = expenseDescCurrency.Default.(string)
-	// expenseDescCreatedAt is the schema descriptor for created_at field.
-	expenseDescCreatedAt := expenseFields[5].Descriptor()
-	// expense.DefaultCreatedAt holds the default value on creation for the created_at field.
-	expense.DefaultCreatedAt = expenseDescCreatedAt.Default.(func() time.Time)
-	// expenseDescID is the schema descriptor for id field.
-	expenseDescID := expenseFields[0].Descriptor()
-	// expense.DefaultID holds the default value on creation for the id field.
-	expense.DefaultID = expenseDescID.Default.(func() uuid.UUID)
+	transactionFields := schema.Transaction{}.Fields()
+	_ = transactionFields
+	// transactionDescCurrency is the schema descriptor for currency field.
+	transactionDescCurrency := transactionFields[3].Descriptor()
+	// transaction.DefaultCurrency holds the default value on creation for the currency field.
+	transaction.DefaultCurrency = transactionDescCurrency.Default.(string)
+	// transactionDescCreatedAt is the schema descriptor for created_at field.
+	transactionDescCreatedAt := transactionFields[7].Descriptor()
+	// transaction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	transaction.DefaultCreatedAt = transactionDescCreatedAt.Default.(func() time.Time)
+	// transactionDescID is the schema descriptor for id field.
+	transactionDescID := transactionFields[0].Descriptor()
+	// transaction.DefaultID holds the default value on creation for the id field.
+	transaction.DefaultID = transactionDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescTimezone is the schema descriptor for timezone field.

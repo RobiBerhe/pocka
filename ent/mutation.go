@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"pocka/ent/expense"
 	"pocka/ent/predicate"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"sync"
 	"time"
@@ -26,41 +26,43 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeExpense = "Expense"
-	TypeUser    = "User"
+	TypeTransaction = "Transaction"
+	TypeUser        = "User"
 )
 
-// ExpenseMutation represents an operation that mutates the Expense nodes in the graph.
-type ExpenseMutation struct {
+// TransactionMutation represents an operation that mutates the Transaction nodes in the graph.
+type TransactionMutation struct {
 	config
 	op            Op
 	typ           string
 	id            *uuid.UUID
 	amount        *float64
 	addamount     *float64
+	_type         *transaction.Type
 	currency      *string
 	category      *string
+	description   *string
 	raw_input     *string
 	created_at    *time.Time
 	clearedFields map[string]struct{}
 	user          *uuid.UUID
 	cleareduser   bool
 	done          bool
-	oldValue      func(context.Context) (*Expense, error)
-	predicates    []predicate.Expense
+	oldValue      func(context.Context) (*Transaction, error)
+	predicates    []predicate.Transaction
 }
 
-var _ ent.Mutation = (*ExpenseMutation)(nil)
+var _ ent.Mutation = (*TransactionMutation)(nil)
 
-// expenseOption allows management of the mutation configuration using functional options.
-type expenseOption func(*ExpenseMutation)
+// transactionOption allows management of the mutation configuration using functional options.
+type transactionOption func(*TransactionMutation)
 
-// newExpenseMutation creates new mutation for the Expense entity.
-func newExpenseMutation(c config, op Op, opts ...expenseOption) *ExpenseMutation {
-	m := &ExpenseMutation{
+// newTransactionMutation creates new mutation for the Transaction entity.
+func newTransactionMutation(c config, op Op, opts ...transactionOption) *TransactionMutation {
+	m := &TransactionMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeExpense,
+		typ:           TypeTransaction,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -69,20 +71,20 @@ func newExpenseMutation(c config, op Op, opts ...expenseOption) *ExpenseMutation
 	return m
 }
 
-// withExpenseID sets the ID field of the mutation.
-func withExpenseID(id uuid.UUID) expenseOption {
-	return func(m *ExpenseMutation) {
+// withTransactionID sets the ID field of the mutation.
+func withTransactionID(id uuid.UUID) transactionOption {
+	return func(m *TransactionMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *Expense
+			value *Transaction
 		)
-		m.oldValue = func(ctx context.Context) (*Expense, error) {
+		m.oldValue = func(ctx context.Context) (*Transaction, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().Expense.Get(ctx, id)
+					value, err = m.Client().Transaction.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -91,10 +93,10 @@ func withExpenseID(id uuid.UUID) expenseOption {
 	}
 }
 
-// withExpense sets the old Expense of the mutation.
-func withExpense(node *Expense) expenseOption {
-	return func(m *ExpenseMutation) {
-		m.oldValue = func(context.Context) (*Expense, error) {
+// withTransaction sets the old Transaction of the mutation.
+func withTransaction(node *Transaction) transactionOption {
+	return func(m *TransactionMutation) {
+		m.oldValue = func(context.Context) (*Transaction, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -103,7 +105,7 @@ func withExpense(node *Expense) expenseOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m ExpenseMutation) Client() *Client {
+func (m TransactionMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -111,7 +113,7 @@ func (m ExpenseMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m ExpenseMutation) Tx() (*Tx, error) {
+func (m TransactionMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -121,14 +123,14 @@ func (m ExpenseMutation) Tx() (*Tx, error) {
 }
 
 // SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Expense entities.
-func (m *ExpenseMutation) SetID(id uuid.UUID) {
+// operation is only accepted on creation of Transaction entities.
+func (m *TransactionMutation) SetID(id uuid.UUID) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ExpenseMutation) ID() (id uuid.UUID, exists bool) {
+func (m *TransactionMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -139,7 +141,7 @@ func (m *ExpenseMutation) ID() (id uuid.UUID, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *ExpenseMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+func (m *TransactionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -148,20 +150,20 @@ func (m *ExpenseMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Expense.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().Transaction.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
 // SetAmount sets the "amount" field.
-func (m *ExpenseMutation) SetAmount(f float64) {
+func (m *TransactionMutation) SetAmount(f float64) {
 	m.amount = &f
 	m.addamount = nil
 }
 
 // Amount returns the value of the "amount" field in the mutation.
-func (m *ExpenseMutation) Amount() (r float64, exists bool) {
+func (m *TransactionMutation) Amount() (r float64, exists bool) {
 	v := m.amount
 	if v == nil {
 		return
@@ -169,10 +171,10 @@ func (m *ExpenseMutation) Amount() (r float64, exists bool) {
 	return *v, true
 }
 
-// OldAmount returns the old "amount" field's value of the Expense entity.
-// If the Expense object wasn't provided to the builder, the object is fetched from the database.
+// OldAmount returns the old "amount" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExpenseMutation) OldAmount(ctx context.Context) (v float64, err error) {
+func (m *TransactionMutation) OldAmount(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAmount is only allowed on UpdateOne operations")
 	}
@@ -187,7 +189,7 @@ func (m *ExpenseMutation) OldAmount(ctx context.Context) (v float64, err error) 
 }
 
 // AddAmount adds f to the "amount" field.
-func (m *ExpenseMutation) AddAmount(f float64) {
+func (m *TransactionMutation) AddAmount(f float64) {
 	if m.addamount != nil {
 		*m.addamount += f
 	} else {
@@ -196,7 +198,7 @@ func (m *ExpenseMutation) AddAmount(f float64) {
 }
 
 // AddedAmount returns the value that was added to the "amount" field in this mutation.
-func (m *ExpenseMutation) AddedAmount() (r float64, exists bool) {
+func (m *TransactionMutation) AddedAmount() (r float64, exists bool) {
 	v := m.addamount
 	if v == nil {
 		return
@@ -205,18 +207,54 @@ func (m *ExpenseMutation) AddedAmount() (r float64, exists bool) {
 }
 
 // ResetAmount resets all changes to the "amount" field.
-func (m *ExpenseMutation) ResetAmount() {
+func (m *TransactionMutation) ResetAmount() {
 	m.amount = nil
 	m.addamount = nil
 }
 
+// SetType sets the "type" field.
+func (m *TransactionMutation) SetType(t transaction.Type) {
+	m._type = &t
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *TransactionMutation) GetType() (r transaction.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionMutation) OldType(ctx context.Context) (v transaction.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *TransactionMutation) ResetType() {
+	m._type = nil
+}
+
 // SetCurrency sets the "currency" field.
-func (m *ExpenseMutation) SetCurrency(s string) {
+func (m *TransactionMutation) SetCurrency(s string) {
 	m.currency = &s
 }
 
 // Currency returns the value of the "currency" field in the mutation.
-func (m *ExpenseMutation) Currency() (r string, exists bool) {
+func (m *TransactionMutation) Currency() (r string, exists bool) {
 	v := m.currency
 	if v == nil {
 		return
@@ -224,10 +262,10 @@ func (m *ExpenseMutation) Currency() (r string, exists bool) {
 	return *v, true
 }
 
-// OldCurrency returns the old "currency" field's value of the Expense entity.
-// If the Expense object wasn't provided to the builder, the object is fetched from the database.
+// OldCurrency returns the old "currency" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExpenseMutation) OldCurrency(ctx context.Context) (v string, err error) {
+func (m *TransactionMutation) OldCurrency(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCurrency is only allowed on UpdateOne operations")
 	}
@@ -242,17 +280,17 @@ func (m *ExpenseMutation) OldCurrency(ctx context.Context) (v string, err error)
 }
 
 // ResetCurrency resets all changes to the "currency" field.
-func (m *ExpenseMutation) ResetCurrency() {
+func (m *TransactionMutation) ResetCurrency() {
 	m.currency = nil
 }
 
 // SetCategory sets the "category" field.
-func (m *ExpenseMutation) SetCategory(s string) {
+func (m *TransactionMutation) SetCategory(s string) {
 	m.category = &s
 }
 
 // Category returns the value of the "category" field in the mutation.
-func (m *ExpenseMutation) Category() (r string, exists bool) {
+func (m *TransactionMutation) Category() (r string, exists bool) {
 	v := m.category
 	if v == nil {
 		return
@@ -260,10 +298,10 @@ func (m *ExpenseMutation) Category() (r string, exists bool) {
 	return *v, true
 }
 
-// OldCategory returns the old "category" field's value of the Expense entity.
-// If the Expense object wasn't provided to the builder, the object is fetched from the database.
+// OldCategory returns the old "category" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExpenseMutation) OldCategory(ctx context.Context) (v string, err error) {
+func (m *TransactionMutation) OldCategory(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCategory is only allowed on UpdateOne operations")
 	}
@@ -278,17 +316,66 @@ func (m *ExpenseMutation) OldCategory(ctx context.Context) (v string, err error)
 }
 
 // ResetCategory resets all changes to the "category" field.
-func (m *ExpenseMutation) ResetCategory() {
+func (m *TransactionMutation) ResetCategory() {
 	m.category = nil
 }
 
+// SetDescription sets the "description" field.
+func (m *TransactionMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *TransactionMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *TransactionMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[transaction.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *TransactionMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[transaction.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *TransactionMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, transaction.FieldDescription)
+}
+
 // SetRawInput sets the "raw_input" field.
-func (m *ExpenseMutation) SetRawInput(s string) {
+func (m *TransactionMutation) SetRawInput(s string) {
 	m.raw_input = &s
 }
 
 // RawInput returns the value of the "raw_input" field in the mutation.
-func (m *ExpenseMutation) RawInput() (r string, exists bool) {
+func (m *TransactionMutation) RawInput() (r string, exists bool) {
 	v := m.raw_input
 	if v == nil {
 		return
@@ -296,10 +383,10 @@ func (m *ExpenseMutation) RawInput() (r string, exists bool) {
 	return *v, true
 }
 
-// OldRawInput returns the old "raw_input" field's value of the Expense entity.
-// If the Expense object wasn't provided to the builder, the object is fetched from the database.
+// OldRawInput returns the old "raw_input" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExpenseMutation) OldRawInput(ctx context.Context) (v string, err error) {
+func (m *TransactionMutation) OldRawInput(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRawInput is only allowed on UpdateOne operations")
 	}
@@ -314,17 +401,17 @@ func (m *ExpenseMutation) OldRawInput(ctx context.Context) (v string, err error)
 }
 
 // ResetRawInput resets all changes to the "raw_input" field.
-func (m *ExpenseMutation) ResetRawInput() {
+func (m *TransactionMutation) ResetRawInput() {
 	m.raw_input = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (m *ExpenseMutation) SetCreatedAt(t time.Time) {
+func (m *TransactionMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
 }
 
 // CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *ExpenseMutation) CreatedAt() (r time.Time, exists bool) {
+func (m *TransactionMutation) CreatedAt() (r time.Time, exists bool) {
 	v := m.created_at
 	if v == nil {
 		return
@@ -332,10 +419,10 @@ func (m *ExpenseMutation) CreatedAt() (r time.Time, exists bool) {
 	return *v, true
 }
 
-// OldCreatedAt returns the old "created_at" field's value of the Expense entity.
-// If the Expense object wasn't provided to the builder, the object is fetched from the database.
+// OldCreatedAt returns the old "created_at" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ExpenseMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *TransactionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
 	}
@@ -350,27 +437,27 @@ func (m *ExpenseMutation) OldCreatedAt(ctx context.Context) (v time.Time, err er
 }
 
 // ResetCreatedAt resets all changes to the "created_at" field.
-func (m *ExpenseMutation) ResetCreatedAt() {
+func (m *TransactionMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
 // SetUserID sets the "user" edge to the User entity by id.
-func (m *ExpenseMutation) SetUserID(id uuid.UUID) {
+func (m *TransactionMutation) SetUserID(id uuid.UUID) {
 	m.user = &id
 }
 
 // ClearUser clears the "user" edge to the User entity.
-func (m *ExpenseMutation) ClearUser() {
+func (m *TransactionMutation) ClearUser() {
 	m.cleareduser = true
 }
 
 // UserCleared reports if the "user" edge to the User entity was cleared.
-func (m *ExpenseMutation) UserCleared() bool {
+func (m *TransactionMutation) UserCleared() bool {
 	return m.cleareduser
 }
 
 // UserID returns the "user" edge ID in the mutation.
-func (m *ExpenseMutation) UserID() (id uuid.UUID, exists bool) {
+func (m *TransactionMutation) UserID() (id uuid.UUID, exists bool) {
 	if m.user != nil {
 		return *m.user, true
 	}
@@ -380,7 +467,7 @@ func (m *ExpenseMutation) UserID() (id uuid.UUID, exists bool) {
 // UserIDs returns the "user" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // UserID instead. It exists only for internal usage by the builders.
-func (m *ExpenseMutation) UserIDs() (ids []uuid.UUID) {
+func (m *TransactionMutation) UserIDs() (ids []uuid.UUID) {
 	if id := m.user; id != nil {
 		ids = append(ids, *id)
 	}
@@ -388,20 +475,20 @@ func (m *ExpenseMutation) UserIDs() (ids []uuid.UUID) {
 }
 
 // ResetUser resets all changes to the "user" edge.
-func (m *ExpenseMutation) ResetUser() {
+func (m *TransactionMutation) ResetUser() {
 	m.user = nil
 	m.cleareduser = false
 }
 
-// Where appends a list predicates to the ExpenseMutation builder.
-func (m *ExpenseMutation) Where(ps ...predicate.Expense) {
+// Where appends a list predicates to the TransactionMutation builder.
+func (m *TransactionMutation) Where(ps ...predicate.Transaction) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the ExpenseMutation builder. Using this method,
+// WhereP appends storage-level predicates to the TransactionMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *ExpenseMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.Expense, len(ps))
+func (m *TransactionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Transaction, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -409,39 +496,45 @@ func (m *ExpenseMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *ExpenseMutation) Op() Op {
+func (m *TransactionMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *ExpenseMutation) SetOp(op Op) {
+func (m *TransactionMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (Expense).
-func (m *ExpenseMutation) Type() string {
+// Type returns the node type of this mutation (Transaction).
+func (m *TransactionMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *ExpenseMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+func (m *TransactionMutation) Fields() []string {
+	fields := make([]string, 0, 7)
 	if m.amount != nil {
-		fields = append(fields, expense.FieldAmount)
+		fields = append(fields, transaction.FieldAmount)
+	}
+	if m._type != nil {
+		fields = append(fields, transaction.FieldType)
 	}
 	if m.currency != nil {
-		fields = append(fields, expense.FieldCurrency)
+		fields = append(fields, transaction.FieldCurrency)
 	}
 	if m.category != nil {
-		fields = append(fields, expense.FieldCategory)
+		fields = append(fields, transaction.FieldCategory)
+	}
+	if m.description != nil {
+		fields = append(fields, transaction.FieldDescription)
 	}
 	if m.raw_input != nil {
-		fields = append(fields, expense.FieldRawInput)
+		fields = append(fields, transaction.FieldRawInput)
 	}
 	if m.created_at != nil {
-		fields = append(fields, expense.FieldCreatedAt)
+		fields = append(fields, transaction.FieldCreatedAt)
 	}
 	return fields
 }
@@ -449,17 +542,21 @@ func (m *ExpenseMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *ExpenseMutation) Field(name string) (ent.Value, bool) {
+func (m *TransactionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case expense.FieldAmount:
+	case transaction.FieldAmount:
 		return m.Amount()
-	case expense.FieldCurrency:
+	case transaction.FieldType:
+		return m.GetType()
+	case transaction.FieldCurrency:
 		return m.Currency()
-	case expense.FieldCategory:
+	case transaction.FieldCategory:
 		return m.Category()
-	case expense.FieldRawInput:
+	case transaction.FieldDescription:
+		return m.Description()
+	case transaction.FieldRawInput:
 		return m.RawInput()
-	case expense.FieldCreatedAt:
+	case transaction.FieldCreatedAt:
 		return m.CreatedAt()
 	}
 	return nil, false
@@ -468,56 +565,74 @@ func (m *ExpenseMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *ExpenseMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *TransactionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case expense.FieldAmount:
+	case transaction.FieldAmount:
 		return m.OldAmount(ctx)
-	case expense.FieldCurrency:
+	case transaction.FieldType:
+		return m.OldType(ctx)
+	case transaction.FieldCurrency:
 		return m.OldCurrency(ctx)
-	case expense.FieldCategory:
+	case transaction.FieldCategory:
 		return m.OldCategory(ctx)
-	case expense.FieldRawInput:
+	case transaction.FieldDescription:
+		return m.OldDescription(ctx)
+	case transaction.FieldRawInput:
 		return m.OldRawInput(ctx)
-	case expense.FieldCreatedAt:
+	case transaction.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
-	return nil, fmt.Errorf("unknown Expense field %s", name)
+	return nil, fmt.Errorf("unknown Transaction field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *ExpenseMutation) SetField(name string, value ent.Value) error {
+func (m *TransactionMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case expense.FieldAmount:
+	case transaction.FieldAmount:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAmount(v)
 		return nil
-	case expense.FieldCurrency:
+	case transaction.FieldType:
+		v, ok := value.(transaction.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case transaction.FieldCurrency:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCurrency(v)
 		return nil
-	case expense.FieldCategory:
+	case transaction.FieldCategory:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCategory(v)
 		return nil
-	case expense.FieldRawInput:
+	case transaction.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case transaction.FieldRawInput:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRawInput(v)
 		return nil
-	case expense.FieldCreatedAt:
+	case transaction.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -525,15 +640,15 @@ func (m *ExpenseMutation) SetField(name string, value ent.Value) error {
 		m.SetCreatedAt(v)
 		return nil
 	}
-	return fmt.Errorf("unknown Expense field %s", name)
+	return fmt.Errorf("unknown Transaction field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *ExpenseMutation) AddedFields() []string {
+func (m *TransactionMutation) AddedFields() []string {
 	var fields []string
 	if m.addamount != nil {
-		fields = append(fields, expense.FieldAmount)
+		fields = append(fields, transaction.FieldAmount)
 	}
 	return fields
 }
@@ -541,9 +656,9 @@ func (m *ExpenseMutation) AddedFields() []string {
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *ExpenseMutation) AddedField(name string) (ent.Value, bool) {
+func (m *TransactionMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case expense.FieldAmount:
+	case transaction.FieldAmount:
 		return m.AddedAmount()
 	}
 	return nil, false
@@ -552,9 +667,9 @@ func (m *ExpenseMutation) AddedField(name string) (ent.Value, bool) {
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *ExpenseMutation) AddField(name string, value ent.Value) error {
+func (m *TransactionMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case expense.FieldAmount:
+	case transaction.FieldAmount:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -562,65 +677,80 @@ func (m *ExpenseMutation) AddField(name string, value ent.Value) error {
 		m.AddAmount(v)
 		return nil
 	}
-	return fmt.Errorf("unknown Expense numeric field %s", name)
+	return fmt.Errorf("unknown Transaction numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *ExpenseMutation) ClearedFields() []string {
-	return nil
+func (m *TransactionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(transaction.FieldDescription) {
+		fields = append(fields, transaction.FieldDescription)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *ExpenseMutation) FieldCleared(name string) bool {
+func (m *TransactionMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *ExpenseMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Expense nullable field %s", name)
+func (m *TransactionMutation) ClearField(name string) error {
+	switch name {
+	case transaction.FieldDescription:
+		m.ClearDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown Transaction nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *ExpenseMutation) ResetField(name string) error {
+func (m *TransactionMutation) ResetField(name string) error {
 	switch name {
-	case expense.FieldAmount:
+	case transaction.FieldAmount:
 		m.ResetAmount()
 		return nil
-	case expense.FieldCurrency:
+	case transaction.FieldType:
+		m.ResetType()
+		return nil
+	case transaction.FieldCurrency:
 		m.ResetCurrency()
 		return nil
-	case expense.FieldCategory:
+	case transaction.FieldCategory:
 		m.ResetCategory()
 		return nil
-	case expense.FieldRawInput:
+	case transaction.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case transaction.FieldRawInput:
 		m.ResetRawInput()
 		return nil
-	case expense.FieldCreatedAt:
+	case transaction.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
 	}
-	return fmt.Errorf("unknown Expense field %s", name)
+	return fmt.Errorf("unknown Transaction field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *ExpenseMutation) AddedEdges() []string {
+func (m *TransactionMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
 	if m.user != nil {
-		edges = append(edges, expense.EdgeUser)
+		edges = append(edges, transaction.EdgeUser)
 	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *ExpenseMutation) AddedIDs(name string) []ent.Value {
+func (m *TransactionMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case expense.EdgeUser:
+	case transaction.EdgeUser:
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
 		}
@@ -629,31 +759,31 @@ func (m *ExpenseMutation) AddedIDs(name string) []ent.Value {
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *ExpenseMutation) RemovedEdges() []string {
+func (m *TransactionMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *ExpenseMutation) RemovedIDs(name string) []ent.Value {
+func (m *TransactionMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *ExpenseMutation) ClearedEdges() []string {
+func (m *TransactionMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
 	if m.cleareduser {
-		edges = append(edges, expense.EdgeUser)
+		edges = append(edges, transaction.EdgeUser)
 	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *ExpenseMutation) EdgeCleared(name string) bool {
+func (m *TransactionMutation) EdgeCleared(name string) bool {
 	switch name {
-	case expense.EdgeUser:
+	case transaction.EdgeUser:
 		return m.cleareduser
 	}
 	return false
@@ -661,50 +791,50 @@ func (m *ExpenseMutation) EdgeCleared(name string) bool {
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *ExpenseMutation) ClearEdge(name string) error {
+func (m *TransactionMutation) ClearEdge(name string) error {
 	switch name {
-	case expense.EdgeUser:
+	case transaction.EdgeUser:
 		m.ClearUser()
 		return nil
 	}
-	return fmt.Errorf("unknown Expense unique edge %s", name)
+	return fmt.Errorf("unknown Transaction unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *ExpenseMutation) ResetEdge(name string) error {
+func (m *TransactionMutation) ResetEdge(name string) error {
 	switch name {
-	case expense.EdgeUser:
+	case transaction.EdgeUser:
 		m.ResetUser()
 		return nil
 	}
-	return fmt.Errorf("unknown Expense edge %s", name)
+	return fmt.Errorf("unknown Transaction edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *uuid.UUID
-	telegram_id       *int64
-	addtelegram_id    *int64
-	username          *string
-	timezone          *string
-	currency          *string
-	language          *string
-	is_premium        *bool
-	current_streak    *int
-	addcurrent_streak *int
-	referred_by       *uuid.UUID
-	created_at        *time.Time
-	clearedFields     map[string]struct{}
-	expenses          map[uuid.UUID]struct{}
-	removedexpenses   map[uuid.UUID]struct{}
-	clearedexpenses   bool
-	done              bool
-	oldValue          func(context.Context) (*User, error)
-	predicates        []predicate.User
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	telegram_id         *int64
+	addtelegram_id      *int64
+	username            *string
+	timezone            *string
+	currency            *string
+	language            *string
+	is_premium          *bool
+	current_streak      *int
+	addcurrent_streak   *int
+	referred_by         *uuid.UUID
+	created_at          *time.Time
+	clearedFields       map[string]struct{}
+	transactions        map[uuid.UUID]struct{}
+	removedtransactions map[uuid.UUID]struct{}
+	clearedtransactions bool
+	done                bool
+	oldValue            func(context.Context) (*User, error)
+	predicates          []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -1201,58 +1331,58 @@ func (m *UserMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
-// AddExpenseIDs adds the "expenses" edge to the Expense entity by ids.
-func (m *UserMutation) AddExpenseIDs(ids ...uuid.UUID) {
-	if m.expenses == nil {
-		m.expenses = make(map[uuid.UUID]struct{})
+// AddTransactionIDs adds the "transactions" edge to the Transaction entity by ids.
+func (m *UserMutation) AddTransactionIDs(ids ...uuid.UUID) {
+	if m.transactions == nil {
+		m.transactions = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.expenses[ids[i]] = struct{}{}
+		m.transactions[ids[i]] = struct{}{}
 	}
 }
 
-// ClearExpenses clears the "expenses" edge to the Expense entity.
-func (m *UserMutation) ClearExpenses() {
-	m.clearedexpenses = true
+// ClearTransactions clears the "transactions" edge to the Transaction entity.
+func (m *UserMutation) ClearTransactions() {
+	m.clearedtransactions = true
 }
 
-// ExpensesCleared reports if the "expenses" edge to the Expense entity was cleared.
-func (m *UserMutation) ExpensesCleared() bool {
-	return m.clearedexpenses
+// TransactionsCleared reports if the "transactions" edge to the Transaction entity was cleared.
+func (m *UserMutation) TransactionsCleared() bool {
+	return m.clearedtransactions
 }
 
-// RemoveExpenseIDs removes the "expenses" edge to the Expense entity by IDs.
-func (m *UserMutation) RemoveExpenseIDs(ids ...uuid.UUID) {
-	if m.removedexpenses == nil {
-		m.removedexpenses = make(map[uuid.UUID]struct{})
+// RemoveTransactionIDs removes the "transactions" edge to the Transaction entity by IDs.
+func (m *UserMutation) RemoveTransactionIDs(ids ...uuid.UUID) {
+	if m.removedtransactions == nil {
+		m.removedtransactions = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.expenses, ids[i])
-		m.removedexpenses[ids[i]] = struct{}{}
+		delete(m.transactions, ids[i])
+		m.removedtransactions[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedExpenses returns the removed IDs of the "expenses" edge to the Expense entity.
-func (m *UserMutation) RemovedExpensesIDs() (ids []uuid.UUID) {
-	for id := range m.removedexpenses {
+// RemovedTransactions returns the removed IDs of the "transactions" edge to the Transaction entity.
+func (m *UserMutation) RemovedTransactionsIDs() (ids []uuid.UUID) {
+	for id := range m.removedtransactions {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ExpensesIDs returns the "expenses" edge IDs in the mutation.
-func (m *UserMutation) ExpensesIDs() (ids []uuid.UUID) {
-	for id := range m.expenses {
+// TransactionsIDs returns the "transactions" edge IDs in the mutation.
+func (m *UserMutation) TransactionsIDs() (ids []uuid.UUID) {
+	for id := range m.transactions {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetExpenses resets all changes to the "expenses" edge.
-func (m *UserMutation) ResetExpenses() {
-	m.expenses = nil
-	m.clearedexpenses = false
-	m.removedexpenses = nil
+// ResetTransactions resets all changes to the "transactions" edge.
+func (m *UserMutation) ResetTransactions() {
+	m.transactions = nil
+	m.clearedtransactions = false
+	m.removedtransactions = nil
 }
 
 // Where appends a list predicates to the UserMutation builder.
@@ -1567,8 +1697,8 @@ func (m *UserMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.expenses != nil {
-		edges = append(edges, user.EdgeExpenses)
+	if m.transactions != nil {
+		edges = append(edges, user.EdgeTransactions)
 	}
 	return edges
 }
@@ -1577,9 +1707,9 @@ func (m *UserMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *UserMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case user.EdgeExpenses:
-		ids := make([]ent.Value, 0, len(m.expenses))
-		for id := range m.expenses {
+	case user.EdgeTransactions:
+		ids := make([]ent.Value, 0, len(m.transactions))
+		for id := range m.transactions {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1590,8 +1720,8 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.removedexpenses != nil {
-		edges = append(edges, user.EdgeExpenses)
+	if m.removedtransactions != nil {
+		edges = append(edges, user.EdgeTransactions)
 	}
 	return edges
 }
@@ -1600,9 +1730,9 @@ func (m *UserMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case user.EdgeExpenses:
-		ids := make([]ent.Value, 0, len(m.removedexpenses))
-		for id := range m.removedexpenses {
+	case user.EdgeTransactions:
+		ids := make([]ent.Value, 0, len(m.removedtransactions))
+		for id := range m.removedtransactions {
 			ids = append(ids, id)
 		}
 		return ids
@@ -1613,8 +1743,8 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.clearedexpenses {
-		edges = append(edges, user.EdgeExpenses)
+	if m.clearedtransactions {
+		edges = append(edges, user.EdgeTransactions)
 	}
 	return edges
 }
@@ -1623,8 +1753,8 @@ func (m *UserMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *UserMutation) EdgeCleared(name string) bool {
 	switch name {
-	case user.EdgeExpenses:
-		return m.clearedexpenses
+	case user.EdgeTransactions:
+		return m.clearedtransactions
 	}
 	return false
 }
@@ -1641,8 +1771,8 @@ func (m *UserMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *UserMutation) ResetEdge(name string) error {
 	switch name {
-	case user.EdgeExpenses:
-		m.ResetExpenses()
+	case user.EdgeTransactions:
+		m.ResetTransactions()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

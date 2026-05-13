@@ -4,34 +4,34 @@ package ent
 
 import (
 	"context"
-	"pocka/ent/expense"
 	"pocka/ent/predicate"
+	"pocka/ent/transaction"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
 
-// ExpenseDelete is the builder for deleting a Expense entity.
-type ExpenseDelete struct {
+// TransactionDelete is the builder for deleting a Transaction entity.
+type TransactionDelete struct {
 	config
 	hooks    []Hook
-	mutation *ExpenseMutation
+	mutation *TransactionMutation
 }
 
-// Where appends a list predicates to the ExpenseDelete builder.
-func (_d *ExpenseDelete) Where(ps ...predicate.Expense) *ExpenseDelete {
+// Where appends a list predicates to the TransactionDelete builder.
+func (_d *TransactionDelete) Where(ps ...predicate.Transaction) *TransactionDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *ExpenseDelete) Exec(ctx context.Context) (int, error) {
+func (_d *TransactionDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *ExpenseDelete) ExecX(ctx context.Context) int {
+func (_d *TransactionDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *ExpenseDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *ExpenseDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(expense.Table, sqlgraph.NewFieldSpec(expense.FieldID, field.TypeUUID))
+func (_d *TransactionDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(transaction.Table, sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *ExpenseDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// ExpenseDeleteOne is the builder for deleting a single Expense entity.
-type ExpenseDeleteOne struct {
-	_d *ExpenseDelete
+// TransactionDeleteOne is the builder for deleting a single Transaction entity.
+type TransactionDeleteOne struct {
+	_d *TransactionDelete
 }
 
-// Where appends a list predicates to the ExpenseDelete builder.
-func (_d *ExpenseDeleteOne) Where(ps ...predicate.Expense) *ExpenseDeleteOne {
+// Where appends a list predicates to the TransactionDelete builder.
+func (_d *TransactionDeleteOne) Where(ps ...predicate.Transaction) *TransactionDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *ExpenseDeleteOne) Exec(ctx context.Context) error {
+func (_d *TransactionDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{expense.Label}
+		return &NotFoundError{transaction.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *ExpenseDeleteOne) ExecX(ctx context.Context) {
+func (_d *TransactionDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

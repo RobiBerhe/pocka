@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 
 	_ "github.com/lib/pq"
 	"pocka/ent"
@@ -24,12 +24,12 @@ func NewDatabase(databaseURL string) (*Database, error) {
 		return nil, fmt.Errorf("failed creating schema resources: %w", err)
 	}
 
-	log.Println("Database connection established and schema migrated.")
+	slog.Info("Database connection established and schema migrated.")
 	return &Database{Client: client}, nil
 }
 
 func (db *Database) Close() {
 	if err := db.Client.Close(); err != nil {
-		log.Printf("failed to close database connection: %v\n", err)
+		slog.Error("failed to close database connection", "error", err)
 	}
 }

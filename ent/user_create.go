@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"pocka/ent/expense"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"time"
 
@@ -154,19 +154,19 @@ func (_c *UserCreate) SetNillableID(v *uuid.UUID) *UserCreate {
 	return _c
 }
 
-// AddExpenseIDs adds the "expenses" edge to the Expense entity by IDs.
-func (_c *UserCreate) AddExpenseIDs(ids ...uuid.UUID) *UserCreate {
-	_c.mutation.AddExpenseIDs(ids...)
+// AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
+func (_c *UserCreate) AddTransactionIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddTransactionIDs(ids...)
 	return _c
 }
 
-// AddExpenses adds the "expenses" edges to the Expense entity.
-func (_c *UserCreate) AddExpenses(v ...*Expense) *UserCreate {
+// AddTransactions adds the "transactions" edges to the Transaction entity.
+func (_c *UserCreate) AddTransactions(v ...*Transaction) *UserCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddExpenseIDs(ids...)
+	return _c.AddTransactionIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -328,15 +328,15 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if nodes := _c.mutation.ExpensesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.TransactionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ExpensesTable,
-			Columns: []string{user.ExpensesColumn},
+			Table:   user.TransactionsTable,
+			Columns: []string{user.TransactionsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(expense.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

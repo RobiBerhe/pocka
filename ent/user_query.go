@@ -7,8 +7,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math"
-	"pocka/ent/expense"
 	"pocka/ent/predicate"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 
 	"entgo.io/ent"
@@ -21,11 +21,11 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx          *QueryContext
-	order        []user.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.User
-	withExpenses *ExpenseQuery
+	ctx              *QueryContext
+	order            []user.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.User
+	withTransactions *TransactionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -62,9 +62,9 @@ func (_q *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	return _q
 }
 
-// QueryExpenses chains the current query on the "expenses" edge.
-func (_q *UserQuery) QueryExpenses() *ExpenseQuery {
-	query := (&ExpenseClient{config: _q.config}).Query()
+// QueryTransactions chains the current query on the "transactions" edge.
+func (_q *UserQuery) QueryTransactions() *TransactionQuery {
+	query := (&TransactionClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -75,8 +75,8 @@ func (_q *UserQuery) QueryExpenses() *ExpenseQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(expense.Table, expense.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.ExpensesTable, user.ExpensesColumn),
+			sqlgraph.To(transaction.Table, transaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TransactionsTable, user.TransactionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -271,26 +271,26 @@ func (_q *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:       _q.config,
-		ctx:          _q.ctx.Clone(),
-		order:        append([]user.OrderOption{}, _q.order...),
-		inters:       append([]Interceptor{}, _q.inters...),
-		predicates:   append([]predicate.User{}, _q.predicates...),
-		withExpenses: _q.withExpenses.Clone(),
+		config:           _q.config,
+		ctx:              _q.ctx.Clone(),
+		order:            append([]user.OrderOption{}, _q.order...),
+		inters:           append([]Interceptor{}, _q.inters...),
+		predicates:       append([]predicate.User{}, _q.predicates...),
+		withTransactions: _q.withTransactions.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithExpenses tells the query-builder to eager-load the nodes that are connected to
-// the "expenses" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithExpenses(opts ...func(*ExpenseQuery)) *UserQuery {
-	query := (&ExpenseClient{config: _q.config}).Query()
+// WithTransactions tells the query-builder to eager-load the nodes that are connected to
+// the "transactions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithTransactions(opts ...func(*TransactionQuery)) *UserQuery {
+	query := (&TransactionClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withExpenses = query
+	_q.withTransactions = query
 	return _q
 }
 
@@ -373,7 +373,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
-			_q.withExpenses != nil,
+			_q.withTransactions != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -394,17 +394,17 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withExpenses; query != nil {
-		if err := _q.loadExpenses(ctx, query, nodes,
-			func(n *User) { n.Edges.Expenses = []*Expense{} },
-			func(n *User, e *Expense) { n.Edges.Expenses = append(n.Edges.Expenses, e) }); err != nil {
+	if query := _q.withTransactions; query != nil {
+		if err := _q.loadTransactions(ctx, query, nodes,
+			func(n *User) { n.Edges.Transactions = []*Transaction{} },
+			func(n *User, e *Transaction) { n.Edges.Transactions = append(n.Edges.Transactions, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *UserQuery) loadExpenses(ctx context.Context, query *ExpenseQuery, nodes []*User, init func(*User), assign func(*User, *Expense)) error {
+func (_q *UserQuery) loadTransactions(ctx context.Context, query *TransactionQuery, nodes []*User, init func(*User), assign func(*User, *Transaction)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*User)
 	for i := range nodes {
@@ -415,21 +415,21 @@ func (_q *UserQuery) loadExpenses(ctx context.Context, query *ExpenseQuery, node
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.Expense(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.ExpensesColumn), fks...))
+	query.Where(predicate.Transaction(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TransactionsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_expenses
+		fk := n.user_transactions
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_expenses" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_transactions" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_expenses" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_transactions" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -44,20 +44,20 @@ type User struct {
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
-	// Expenses holds the value of the expenses edge.
-	Expenses []*Expense `json:"expenses,omitempty"`
+	// Transactions holds the value of the transactions edge.
+	Transactions []*Transaction `json:"transactions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// ExpensesOrErr returns the Expenses value or an error if the edge
+// TransactionsOrErr returns the Transactions value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) ExpensesOrErr() ([]*Expense, error) {
+func (e UserEdges) TransactionsOrErr() ([]*Transaction, error) {
 	if e.loadedTypes[0] {
-		return e.Expenses, nil
+		return e.Transactions, nil
 	}
-	return nil, &NotLoadedError{edge: "expenses"}
+	return nil, &NotLoadedError{edge: "transactions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -166,9 +166,9 @@ func (_m *User) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryExpenses queries the "expenses" edge of the User entity.
-func (_m *User) QueryExpenses() *ExpenseQuery {
-	return NewUserClient(_m.config).QueryExpenses(_m)
+// QueryTransactions queries the "transactions" edge of the User entity.
+func (_m *User) QueryTransactions() *TransactionQuery {
+	return NewUserClient(_m.config).QueryTransactions(_m)
 }
 
 // Update returns a builder for updating this User.

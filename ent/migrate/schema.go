@@ -8,25 +8,27 @@ import (
 )
 
 var (
-	// ExpensesColumns holds the columns for the "expenses" table.
-	ExpensesColumns = []*schema.Column{
+	// TransactionsColumns holds the columns for the "transactions" table.
+	TransactionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "amount", Type: field.TypeFloat64},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"INCOME", "EXPENSE"}, Default: "EXPENSE"},
 		{Name: "currency", Type: field.TypeString, Default: "ETB"},
 		{Name: "category", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "raw_input", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "user_expenses", Type: field.TypeUUID},
+		{Name: "user_transactions", Type: field.TypeUUID},
 	}
-	// ExpensesTable holds the schema information for the "expenses" table.
-	ExpensesTable = &schema.Table{
-		Name:       "expenses",
-		Columns:    ExpensesColumns,
-		PrimaryKey: []*schema.Column{ExpensesColumns[0]},
+	// TransactionsTable holds the schema information for the "transactions" table.
+	TransactionsTable = &schema.Table{
+		Name:       "transactions",
+		Columns:    TransactionsColumns,
+		PrimaryKey: []*schema.Column{TransactionsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "expenses_users_expenses",
-				Columns:    []*schema.Column{ExpensesColumns[6]},
+				Symbol:     "transactions_users_transactions",
+				Columns:    []*schema.Column{TransactionsColumns[8]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -53,11 +55,11 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		ExpensesTable,
+		TransactionsTable,
 		UsersTable,
 	}
 )
 
 func init() {
-	ExpensesTable.ForeignKeys[0].RefTable = UsersTable
+	TransactionsTable.ForeignKeys[0].RefTable = UsersTable
 }

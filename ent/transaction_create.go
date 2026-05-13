@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"pocka/ent/expense"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"time"
 
@@ -15,27 +15,41 @@ import (
 	"github.com/google/uuid"
 )
 
-// ExpenseCreate is the builder for creating a Expense entity.
-type ExpenseCreate struct {
+// TransactionCreate is the builder for creating a Transaction entity.
+type TransactionCreate struct {
 	config
-	mutation *ExpenseMutation
+	mutation *TransactionMutation
 	hooks    []Hook
 }
 
 // SetAmount sets the "amount" field.
-func (_c *ExpenseCreate) SetAmount(v float64) *ExpenseCreate {
+func (_c *TransactionCreate) SetAmount(v float64) *TransactionCreate {
 	_c.mutation.SetAmount(v)
 	return _c
 }
 
+// SetType sets the "type" field.
+func (_c *TransactionCreate) SetType(v transaction.Type) *TransactionCreate {
+	_c.mutation.SetType(v)
+	return _c
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (_c *TransactionCreate) SetNillableType(v *transaction.Type) *TransactionCreate {
+	if v != nil {
+		_c.SetType(*v)
+	}
+	return _c
+}
+
 // SetCurrency sets the "currency" field.
-func (_c *ExpenseCreate) SetCurrency(v string) *ExpenseCreate {
+func (_c *TransactionCreate) SetCurrency(v string) *TransactionCreate {
 	_c.mutation.SetCurrency(v)
 	return _c
 }
 
 // SetNillableCurrency sets the "currency" field if the given value is not nil.
-func (_c *ExpenseCreate) SetNillableCurrency(v *string) *ExpenseCreate {
+func (_c *TransactionCreate) SetNillableCurrency(v *string) *TransactionCreate {
 	if v != nil {
 		_c.SetCurrency(*v)
 	}
@@ -43,25 +57,39 @@ func (_c *ExpenseCreate) SetNillableCurrency(v *string) *ExpenseCreate {
 }
 
 // SetCategory sets the "category" field.
-func (_c *ExpenseCreate) SetCategory(v string) *ExpenseCreate {
+func (_c *TransactionCreate) SetCategory(v string) *TransactionCreate {
 	_c.mutation.SetCategory(v)
 	return _c
 }
 
+// SetDescription sets the "description" field.
+func (_c *TransactionCreate) SetDescription(v string) *TransactionCreate {
+	_c.mutation.SetDescription(v)
+	return _c
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_c *TransactionCreate) SetNillableDescription(v *string) *TransactionCreate {
+	if v != nil {
+		_c.SetDescription(*v)
+	}
+	return _c
+}
+
 // SetRawInput sets the "raw_input" field.
-func (_c *ExpenseCreate) SetRawInput(v string) *ExpenseCreate {
+func (_c *TransactionCreate) SetRawInput(v string) *TransactionCreate {
 	_c.mutation.SetRawInput(v)
 	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (_c *ExpenseCreate) SetCreatedAt(v time.Time) *ExpenseCreate {
+func (_c *TransactionCreate) SetCreatedAt(v time.Time) *TransactionCreate {
 	_c.mutation.SetCreatedAt(v)
 	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (_c *ExpenseCreate) SetNillableCreatedAt(v *time.Time) *ExpenseCreate {
+func (_c *TransactionCreate) SetNillableCreatedAt(v *time.Time) *TransactionCreate {
 	if v != nil {
 		_c.SetCreatedAt(*v)
 	}
@@ -69,13 +97,13 @@ func (_c *ExpenseCreate) SetNillableCreatedAt(v *time.Time) *ExpenseCreate {
 }
 
 // SetID sets the "id" field.
-func (_c *ExpenseCreate) SetID(v uuid.UUID) *ExpenseCreate {
+func (_c *TransactionCreate) SetID(v uuid.UUID) *TransactionCreate {
 	_c.mutation.SetID(v)
 	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (_c *ExpenseCreate) SetNillableID(v *uuid.UUID) *ExpenseCreate {
+func (_c *TransactionCreate) SetNillableID(v *uuid.UUID) *TransactionCreate {
 	if v != nil {
 		_c.SetID(*v)
 	}
@@ -83,29 +111,29 @@ func (_c *ExpenseCreate) SetNillableID(v *uuid.UUID) *ExpenseCreate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (_c *ExpenseCreate) SetUserID(id uuid.UUID) *ExpenseCreate {
+func (_c *TransactionCreate) SetUserID(id uuid.UUID) *TransactionCreate {
 	_c.mutation.SetUserID(id)
 	return _c
 }
 
 // SetUser sets the "user" edge to the User entity.
-func (_c *ExpenseCreate) SetUser(v *User) *ExpenseCreate {
+func (_c *TransactionCreate) SetUser(v *User) *TransactionCreate {
 	return _c.SetUserID(v.ID)
 }
 
-// Mutation returns the ExpenseMutation object of the builder.
-func (_c *ExpenseCreate) Mutation() *ExpenseMutation {
+// Mutation returns the TransactionMutation object of the builder.
+func (_c *TransactionCreate) Mutation() *TransactionMutation {
 	return _c.mutation
 }
 
-// Save creates the Expense in the database.
-func (_c *ExpenseCreate) Save(ctx context.Context) (*Expense, error) {
+// Save creates the Transaction in the database.
+func (_c *TransactionCreate) Save(ctx context.Context) (*Transaction, error) {
 	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (_c *ExpenseCreate) SaveX(ctx context.Context) *Expense {
+func (_c *TransactionCreate) SaveX(ctx context.Context) *Transaction {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -114,58 +142,70 @@ func (_c *ExpenseCreate) SaveX(ctx context.Context) *Expense {
 }
 
 // Exec executes the query.
-func (_c *ExpenseCreate) Exec(ctx context.Context) error {
+func (_c *TransactionCreate) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *ExpenseCreate) ExecX(ctx context.Context) {
+func (_c *TransactionCreate) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ExpenseCreate) defaults() {
+func (_c *TransactionCreate) defaults() {
+	if _, ok := _c.mutation.GetType(); !ok {
+		v := transaction.DefaultType
+		_c.mutation.SetType(v)
+	}
 	if _, ok := _c.mutation.Currency(); !ok {
-		v := expense.DefaultCurrency
+		v := transaction.DefaultCurrency
 		_c.mutation.SetCurrency(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		v := expense.DefaultCreatedAt()
+		v := transaction.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
-		v := expense.DefaultID()
+		v := transaction.DefaultID()
 		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_c *ExpenseCreate) check() error {
+func (_c *TransactionCreate) check() error {
 	if _, ok := _c.mutation.Amount(); !ok {
-		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Expense.amount"`)}
+		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Transaction.amount"`)}
+	}
+	if _, ok := _c.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Transaction.type"`)}
+	}
+	if v, ok := _c.mutation.GetType(); ok {
+		if err := transaction.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Transaction.type": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.Currency(); !ok {
-		return &ValidationError{Name: "currency", err: errors.New(`ent: missing required field "Expense.currency"`)}
+		return &ValidationError{Name: "currency", err: errors.New(`ent: missing required field "Transaction.currency"`)}
 	}
 	if _, ok := _c.mutation.Category(); !ok {
-		return &ValidationError{Name: "category", err: errors.New(`ent: missing required field "Expense.category"`)}
+		return &ValidationError{Name: "category", err: errors.New(`ent: missing required field "Transaction.category"`)}
 	}
 	if _, ok := _c.mutation.RawInput(); !ok {
-		return &ValidationError{Name: "raw_input", err: errors.New(`ent: missing required field "Expense.raw_input"`)}
+		return &ValidationError{Name: "raw_input", err: errors.New(`ent: missing required field "Transaction.raw_input"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Expense.created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Transaction.created_at"`)}
 	}
 	if len(_c.mutation.UserIDs()) == 0 {
-		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Expense.user"`)}
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Transaction.user"`)}
 	}
 	return nil
 }
 
-func (_c *ExpenseCreate) sqlSave(ctx context.Context) (*Expense, error) {
+func (_c *TransactionCreate) sqlSave(ctx context.Context) (*Transaction, error) {
 	if err := _c.check(); err != nil {
 		return nil, err
 	}
@@ -188,41 +228,49 @@ func (_c *ExpenseCreate) sqlSave(ctx context.Context) (*Expense, error) {
 	return _node, nil
 }
 
-func (_c *ExpenseCreate) createSpec() (*Expense, *sqlgraph.CreateSpec) {
+func (_c *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Expense{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(expense.Table, sqlgraph.NewFieldSpec(expense.FieldID, field.TypeUUID))
+		_node = &Transaction{config: _c.config}
+		_spec = sqlgraph.NewCreateSpec(transaction.Table, sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeUUID))
 	)
 	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
 	if value, ok := _c.mutation.Amount(); ok {
-		_spec.SetField(expense.FieldAmount, field.TypeFloat64, value)
+		_spec.SetField(transaction.FieldAmount, field.TypeFloat64, value)
 		_node.Amount = value
 	}
+	if value, ok := _c.mutation.GetType(); ok {
+		_spec.SetField(transaction.FieldType, field.TypeEnum, value)
+		_node.Type = value
+	}
 	if value, ok := _c.mutation.Currency(); ok {
-		_spec.SetField(expense.FieldCurrency, field.TypeString, value)
+		_spec.SetField(transaction.FieldCurrency, field.TypeString, value)
 		_node.Currency = value
 	}
 	if value, ok := _c.mutation.Category(); ok {
-		_spec.SetField(expense.FieldCategory, field.TypeString, value)
+		_spec.SetField(transaction.FieldCategory, field.TypeString, value)
 		_node.Category = value
 	}
+	if value, ok := _c.mutation.Description(); ok {
+		_spec.SetField(transaction.FieldDescription, field.TypeString, value)
+		_node.Description = value
+	}
 	if value, ok := _c.mutation.RawInput(); ok {
-		_spec.SetField(expense.FieldRawInput, field.TypeString, value)
+		_spec.SetField(transaction.FieldRawInput, field.TypeString, value)
 		_node.RawInput = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
-		_spec.SetField(expense.FieldCreatedAt, field.TypeTime, value)
+		_spec.SetField(transaction.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   expense.UserTable,
-			Columns: []string{expense.UserColumn},
+			Table:   transaction.UserTable,
+			Columns: []string{transaction.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
@@ -231,33 +279,33 @@ func (_c *ExpenseCreate) createSpec() (*Expense, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_expenses = &nodes[0]
+		_node.user_transactions = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
 
-// ExpenseCreateBulk is the builder for creating many Expense entities in bulk.
-type ExpenseCreateBulk struct {
+// TransactionCreateBulk is the builder for creating many Transaction entities in bulk.
+type TransactionCreateBulk struct {
 	config
 	err      error
-	builders []*ExpenseCreate
+	builders []*TransactionCreate
 }
 
-// Save creates the Expense entities in the database.
-func (_c *ExpenseCreateBulk) Save(ctx context.Context) ([]*Expense, error) {
+// Save creates the Transaction entities in the database.
+func (_c *TransactionCreateBulk) Save(ctx context.Context) ([]*Transaction, error) {
 	if _c.err != nil {
 		return nil, _c.err
 	}
 	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
-	nodes := make([]*Expense, len(_c.builders))
+	nodes := make([]*Transaction, len(_c.builders))
 	mutators := make([]Mutator, len(_c.builders))
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*ExpenseMutation)
+				mutation, ok := m.(*TransactionMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -300,7 +348,7 @@ func (_c *ExpenseCreateBulk) Save(ctx context.Context) ([]*Expense, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_c *ExpenseCreateBulk) SaveX(ctx context.Context) []*Expense {
+func (_c *TransactionCreateBulk) SaveX(ctx context.Context) []*Transaction {
 	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -309,13 +357,13 @@ func (_c *ExpenseCreateBulk) SaveX(ctx context.Context) []*Expense {
 }
 
 // Exec executes the query.
-func (_c *ExpenseCreateBulk) Exec(ctx context.Context) error {
+func (_c *TransactionCreateBulk) Exec(ctx context.Context) error {
 	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_c *ExpenseCreateBulk) ExecX(ctx context.Context) {
+func (_c *TransactionCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}

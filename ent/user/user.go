@@ -33,17 +33,17 @@ const (
 	FieldReferredBy = "referred_by"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
-	// EdgeExpenses holds the string denoting the expenses edge name in mutations.
-	EdgeExpenses = "expenses"
+	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
+	EdgeTransactions = "transactions"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// ExpensesTable is the table that holds the expenses relation/edge.
-	ExpensesTable = "expenses"
-	// ExpensesInverseTable is the table name for the Expense entity.
-	// It exists in this package in order to avoid circular dependency with the "expense" package.
-	ExpensesInverseTable = "expenses"
-	// ExpensesColumn is the table column denoting the expenses relation/edge.
-	ExpensesColumn = "user_expenses"
+	// TransactionsTable is the table that holds the transactions relation/edge.
+	TransactionsTable = "transactions"
+	// TransactionsInverseTable is the table name for the Transaction entity.
+	// It exists in this package in order to avoid circular dependency with the "transaction" package.
+	TransactionsInverseTable = "transactions"
+	// TransactionsColumn is the table column denoting the transactions relation/edge.
+	TransactionsColumn = "user_transactions"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -140,23 +140,23 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
-// ByExpensesCount orders the results by expenses count.
-func ByExpensesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByTransactionsCount orders the results by transactions count.
+func ByTransactionsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newExpensesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newTransactionsStep(), opts...)
 	}
 }
 
-// ByExpenses orders the results by expenses terms.
-func ByExpenses(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByTransactions orders the results by transactions terms.
+func ByTransactions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newExpensesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newTransactionsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newExpensesStep() *sqlgraph.Step {
+func newTransactionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ExpensesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, ExpensesTable, ExpensesColumn),
+		sqlgraph.To(TransactionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
 	)
 }

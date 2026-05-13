@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"pocka/ent/expense"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"reflect"
 	"sync"
@@ -74,8 +74,8 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			expense.Table: expense.ValidColumn,
-			user.Table:    user.ValidColumn,
+			transaction.Table: transaction.ValidColumn,
+			user.Table:        user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

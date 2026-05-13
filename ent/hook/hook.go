@@ -8,16 +8,16 @@ import (
 	"pocka/ent"
 )
 
-// The ExpenseFunc type is an adapter to allow the use of ordinary
-// function as Expense mutator.
-type ExpenseFunc func(context.Context, *ent.ExpenseMutation) (ent.Value, error)
+// The TransactionFunc type is an adapter to allow the use of ordinary
+// function as Transaction mutator.
+type TransactionFunc func(context.Context, *ent.TransactionMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f ExpenseFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ExpenseMutation); ok {
+func (f TransactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TransactionMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExpenseMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TransactionMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

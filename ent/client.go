@@ -11,7 +11,7 @@ import (
 
 	"pocka/ent/migrate"
 
-	"pocka/ent/expense"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 
 	"entgo.io/ent"
@@ -26,8 +26,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Expense is the client for interacting with the Expense builders.
-	Expense *ExpenseClient
+	// Transaction is the client for interacting with the Transaction builders.
+	Transaction *TransactionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -41,7 +41,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Expense = NewExpenseClient(c.config)
+	c.Transaction = NewTransactionClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -133,10 +133,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Expense: NewExpenseClient(cfg),
-		User:    NewUserClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Transaction: NewTransactionClient(cfg),
+		User:        NewUserClient(cfg),
 	}, nil
 }
 
@@ -154,17 +154,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Expense: NewExpenseClient(cfg),
-		User:    NewUserClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Transaction: NewTransactionClient(cfg),
+		User:        NewUserClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Expense.
+//		Transaction.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -186,22 +186,22 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Expense.Use(hooks...)
+	c.Transaction.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Expense.Intercept(interceptors...)
+	c.Transaction.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
-	case *ExpenseMutation:
-		return c.Expense.mutate(ctx, m)
+	case *TransactionMutation:
+		return c.Transaction.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -209,107 +209,107 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	}
 }
 
-// ExpenseClient is a client for the Expense schema.
-type ExpenseClient struct {
+// TransactionClient is a client for the Transaction schema.
+type TransactionClient struct {
 	config
 }
 
-// NewExpenseClient returns a client for the Expense from the given config.
-func NewExpenseClient(c config) *ExpenseClient {
-	return &ExpenseClient{config: c}
+// NewTransactionClient returns a client for the Transaction from the given config.
+func NewTransactionClient(c config) *TransactionClient {
+	return &TransactionClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `expense.Hooks(f(g(h())))`.
-func (c *ExpenseClient) Use(hooks ...Hook) {
-	c.hooks.Expense = append(c.hooks.Expense, hooks...)
+// A call to `Use(f, g, h)` equals to `transaction.Hooks(f(g(h())))`.
+func (c *TransactionClient) Use(hooks ...Hook) {
+	c.hooks.Transaction = append(c.hooks.Transaction, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `expense.Intercept(f(g(h())))`.
-func (c *ExpenseClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Expense = append(c.inters.Expense, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `transaction.Intercept(f(g(h())))`.
+func (c *TransactionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Transaction = append(c.inters.Transaction, interceptors...)
 }
 
-// Create returns a builder for creating a Expense entity.
-func (c *ExpenseClient) Create() *ExpenseCreate {
-	mutation := newExpenseMutation(c.config, OpCreate)
-	return &ExpenseCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Transaction entity.
+func (c *TransactionClient) Create() *TransactionCreate {
+	mutation := newTransactionMutation(c.config, OpCreate)
+	return &TransactionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Expense entities.
-func (c *ExpenseClient) CreateBulk(builders ...*ExpenseCreate) *ExpenseCreateBulk {
-	return &ExpenseCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Transaction entities.
+func (c *TransactionClient) CreateBulk(builders ...*TransactionCreate) *TransactionCreateBulk {
+	return &TransactionCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *ExpenseClient) MapCreateBulk(slice any, setFunc func(*ExpenseCreate, int)) *ExpenseCreateBulk {
+func (c *TransactionClient) MapCreateBulk(slice any, setFunc func(*TransactionCreate, int)) *TransactionCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &ExpenseCreateBulk{err: fmt.Errorf("calling to ExpenseClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &TransactionCreateBulk{err: fmt.Errorf("calling to TransactionClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*ExpenseCreate, rv.Len())
+	builders := make([]*TransactionCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &ExpenseCreateBulk{config: c.config, builders: builders}
+	return &TransactionCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Expense.
-func (c *ExpenseClient) Update() *ExpenseUpdate {
-	mutation := newExpenseMutation(c.config, OpUpdate)
-	return &ExpenseUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Transaction.
+func (c *TransactionClient) Update() *TransactionUpdate {
+	mutation := newTransactionMutation(c.config, OpUpdate)
+	return &TransactionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *ExpenseClient) UpdateOne(_m *Expense) *ExpenseUpdateOne {
-	mutation := newExpenseMutation(c.config, OpUpdateOne, withExpense(_m))
-	return &ExpenseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *TransactionClient) UpdateOne(_m *Transaction) *TransactionUpdateOne {
+	mutation := newTransactionMutation(c.config, OpUpdateOne, withTransaction(_m))
+	return &TransactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ExpenseClient) UpdateOneID(id uuid.UUID) *ExpenseUpdateOne {
-	mutation := newExpenseMutation(c.config, OpUpdateOne, withExpenseID(id))
-	return &ExpenseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *TransactionClient) UpdateOneID(id uuid.UUID) *TransactionUpdateOne {
+	mutation := newTransactionMutation(c.config, OpUpdateOne, withTransactionID(id))
+	return &TransactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Expense.
-func (c *ExpenseClient) Delete() *ExpenseDelete {
-	mutation := newExpenseMutation(c.config, OpDelete)
-	return &ExpenseDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Transaction.
+func (c *TransactionClient) Delete() *TransactionDelete {
+	mutation := newTransactionMutation(c.config, OpDelete)
+	return &TransactionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *ExpenseClient) DeleteOne(_m *Expense) *ExpenseDeleteOne {
+func (c *TransactionClient) DeleteOne(_m *Transaction) *TransactionDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ExpenseClient) DeleteOneID(id uuid.UUID) *ExpenseDeleteOne {
-	builder := c.Delete().Where(expense.ID(id))
+func (c *TransactionClient) DeleteOneID(id uuid.UUID) *TransactionDeleteOne {
+	builder := c.Delete().Where(transaction.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &ExpenseDeleteOne{builder}
+	return &TransactionDeleteOne{builder}
 }
 
-// Query returns a query builder for Expense.
-func (c *ExpenseClient) Query() *ExpenseQuery {
-	return &ExpenseQuery{
+// Query returns a query builder for Transaction.
+func (c *TransactionClient) Query() *TransactionQuery {
+	return &TransactionQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeExpense},
+		ctx:    &QueryContext{Type: TypeTransaction},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Expense entity by its id.
-func (c *ExpenseClient) Get(ctx context.Context, id uuid.UUID) (*Expense, error) {
-	return c.Query().Where(expense.ID(id)).Only(ctx)
+// Get returns a Transaction entity by its id.
+func (c *TransactionClient) Get(ctx context.Context, id uuid.UUID) (*Transaction, error) {
+	return c.Query().Where(transaction.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ExpenseClient) GetX(ctx context.Context, id uuid.UUID) *Expense {
+func (c *TransactionClient) GetX(ctx context.Context, id uuid.UUID) *Transaction {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -317,15 +317,15 @@ func (c *ExpenseClient) GetX(ctx context.Context, id uuid.UUID) *Expense {
 	return obj
 }
 
-// QueryUser queries the user edge of a Expense.
-func (c *ExpenseClient) QueryUser(_m *Expense) *UserQuery {
+// QueryUser queries the user edge of a Transaction.
+func (c *TransactionClient) QueryUser(_m *Transaction) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(expense.Table, expense.FieldID, id),
+			sqlgraph.From(transaction.Table, transaction.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, expense.UserTable, expense.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, transaction.UserTable, transaction.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -334,27 +334,27 @@ func (c *ExpenseClient) QueryUser(_m *Expense) *UserQuery {
 }
 
 // Hooks returns the client hooks.
-func (c *ExpenseClient) Hooks() []Hook {
-	return c.hooks.Expense
+func (c *TransactionClient) Hooks() []Hook {
+	return c.hooks.Transaction
 }
 
 // Interceptors returns the client interceptors.
-func (c *ExpenseClient) Interceptors() []Interceptor {
-	return c.inters.Expense
+func (c *TransactionClient) Interceptors() []Interceptor {
+	return c.inters.Transaction
 }
 
-func (c *ExpenseClient) mutate(ctx context.Context, m *ExpenseMutation) (Value, error) {
+func (c *TransactionClient) mutate(ctx context.Context, m *TransactionMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&ExpenseCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&TransactionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&ExpenseUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&TransactionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&ExpenseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&TransactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&ExpenseDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&TransactionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Expense mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Transaction mutation op: %q", m.Op())
 	}
 }
 
@@ -466,15 +466,15 @@ func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	return obj
 }
 
-// QueryExpenses queries the expenses edge of a User.
-func (c *UserClient) QueryExpenses(_m *User) *ExpenseQuery {
-	query := (&ExpenseClient{config: c.config}).Query()
+// QueryTransactions queries the transactions edge of a User.
+func (c *UserClient) QueryTransactions(_m *User) *TransactionQuery {
+	query := (&TransactionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
-			sqlgraph.To(expense.Table, expense.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.ExpensesTable, user.ExpensesColumn),
+			sqlgraph.To(transaction.Table, transaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TransactionsTable, user.TransactionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -510,9 +510,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Expense, User []ent.Hook
+		Transaction, User []ent.Hook
 	}
 	inters struct {
-		Expense, User []ent.Interceptor
+		Transaction, User []ent.Interceptor
 	}
 )

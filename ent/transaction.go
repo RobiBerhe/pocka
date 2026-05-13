@@ -4,7 +4,7 @@ package ent
 
 import (
 	"fmt"
-	"pocka/ent/expense"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"strings"
 	"time"
@@ -14,30 +14,34 @@ import (
 	"github.com/google/uuid"
 )
 
-// Expense is the model entity for the Expense schema.
-type Expense struct {
+// Transaction is the model entity for the Transaction schema.
+type Transaction struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// The amount spent
+	// The amount of the transaction
 	Amount float64 `json:"amount,omitempty"`
-	// The currency of the expense
+	// The type of transaction
+	Type transaction.Type `json:"type,omitempty"`
+	// The currency of the transaction
 	Currency string `json:"currency,omitempty"`
-	// The category of the expense (e.g., Food, Transport)
+	// The category of the transaction (e.g., Food, Transport, Salary)
 	Category string `json:"category,omitempty"`
+	// Optional description of the transaction
+	Description string `json:"description,omitempty"`
 	// The original text message sent by the user
 	RawInput string `json:"raw_input,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the ExpenseQuery when eager-loading is set.
-	Edges         ExpenseEdges `json:"edges"`
-	user_expenses *uuid.UUID
-	selectValues  sql.SelectValues
+	// The values are being populated by the TransactionQuery when eager-loading is set.
+	Edges             TransactionEdges `json:"edges"`
+	user_transactions *uuid.UUID
+	selectValues      sql.SelectValues
 }
 
-// ExpenseEdges holds the relations/edges for other nodes in the graph.
-type ExpenseEdges struct {
+// TransactionEdges holds the relations/edges for other nodes in the graph.
+type TransactionEdges struct {
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -47,7 +51,7 @@ type ExpenseEdges struct {
 
 // UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e ExpenseEdges) UserOrErr() (*User, error) {
+func (e TransactionEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
 	} else if e.loadedTypes[0] {
@@ -57,19 +61,19 @@ func (e ExpenseEdges) UserOrErr() (*User, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Expense) scanValues(columns []string) ([]any, error) {
+func (*Transaction) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case expense.FieldAmount:
+		case transaction.FieldAmount:
 			values[i] = new(sql.NullFloat64)
-		case expense.FieldCurrency, expense.FieldCategory, expense.FieldRawInput:
+		case transaction.FieldType, transaction.FieldCurrency, transaction.FieldCategory, transaction.FieldDescription, transaction.FieldRawInput:
 			values[i] = new(sql.NullString)
-		case expense.FieldCreatedAt:
+		case transaction.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case expense.FieldID:
+		case transaction.FieldID:
 			values[i] = new(uuid.UUID)
-		case expense.ForeignKeys[0]: // user_expenses
+		case transaction.ForeignKeys[0]: // user_transactions
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -79,55 +83,67 @@ func (*Expense) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Expense fields.
-func (_m *Expense) assignValues(columns []string, values []any) error {
+// to the Transaction fields.
+func (_m *Transaction) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case expense.FieldID:
+		case transaction.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case expense.FieldAmount:
+		case transaction.FieldAmount:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field amount", values[i])
 			} else if value.Valid {
 				_m.Amount = value.Float64
 			}
-		case expense.FieldCurrency:
+		case transaction.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				_m.Type = transaction.Type(value.String)
+			}
+		case transaction.FieldCurrency:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field currency", values[i])
 			} else if value.Valid {
 				_m.Currency = value.String
 			}
-		case expense.FieldCategory:
+		case transaction.FieldCategory:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field category", values[i])
 			} else if value.Valid {
 				_m.Category = value.String
 			}
-		case expense.FieldRawInput:
+		case transaction.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				_m.Description = value.String
+			}
+		case transaction.FieldRawInput:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field raw_input", values[i])
 			} else if value.Valid {
 				_m.RawInput = value.String
 			}
-		case expense.FieldCreatedAt:
+		case transaction.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case expense.ForeignKeys[0]:
+		case transaction.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field user_expenses", values[i])
+				return fmt.Errorf("unexpected type %T for field user_transactions", values[i])
 			} else if value.Valid {
-				_m.user_expenses = new(uuid.UUID)
-				*_m.user_expenses = *value.S.(*uuid.UUID)
+				_m.user_transactions = new(uuid.UUID)
+				*_m.user_transactions = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -136,48 +152,54 @@ func (_m *Expense) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the Expense.
+// Value returns the ent.Value that was dynamically selected and assigned to the Transaction.
 // This includes values selected through modifiers, order, etc.
-func (_m *Expense) Value(name string) (ent.Value, error) {
+func (_m *Transaction) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryUser queries the "user" edge of the Expense entity.
-func (_m *Expense) QueryUser() *UserQuery {
-	return NewExpenseClient(_m.config).QueryUser(_m)
+// QueryUser queries the "user" edge of the Transaction entity.
+func (_m *Transaction) QueryUser() *UserQuery {
+	return NewTransactionClient(_m.config).QueryUser(_m)
 }
 
-// Update returns a builder for updating this Expense.
-// Note that you need to call Expense.Unwrap() before calling this method if this Expense
+// Update returns a builder for updating this Transaction.
+// Note that you need to call Transaction.Unwrap() before calling this method if this Transaction
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *Expense) Update() *ExpenseUpdateOne {
-	return NewExpenseClient(_m.config).UpdateOne(_m)
+func (_m *Transaction) Update() *TransactionUpdateOne {
+	return NewTransactionClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the Expense entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Transaction entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *Expense) Unwrap() *Expense {
+func (_m *Transaction) Unwrap() *Transaction {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Expense is not a transactional entity")
+		panic("ent: Transaction is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *Expense) String() string {
+func (_m *Transaction) String() string {
 	var builder strings.Builder
-	builder.WriteString("Expense(")
+	builder.WriteString("Transaction(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("amount=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Amount))
+	builder.WriteString(", ")
+	builder.WriteString("type=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Type))
 	builder.WriteString(", ")
 	builder.WriteString("currency=")
 	builder.WriteString(_m.Currency)
 	builder.WriteString(", ")
 	builder.WriteString("category=")
 	builder.WriteString(_m.Category)
+	builder.WriteString(", ")
+	builder.WriteString("description=")
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("raw_input=")
 	builder.WriteString(_m.RawInput)
@@ -188,5 +210,5 @@ func (_m *Expense) String() string {
 	return builder.String()
 }
 
-// Expenses is a parsable slice of Expense.
-type Expenses []*Expense
+// Transactions is a parsable slice of Transaction.
+type Transactions []*Transaction

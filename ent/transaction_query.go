@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"pocka/ent/expense"
 	"pocka/ent/predicate"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 
 	"entgo.io/ent"
@@ -17,13 +17,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// ExpenseQuery is the builder for querying Expense entities.
-type ExpenseQuery struct {
+// TransactionQuery is the builder for querying Transaction entities.
+type TransactionQuery struct {
 	config
 	ctx        *QueryContext
-	order      []expense.OrderOption
+	order      []transaction.OrderOption
 	inters     []Interceptor
-	predicates []predicate.Expense
+	predicates []predicate.Transaction
 	withUser   *UserQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
@@ -31,39 +31,39 @@ type ExpenseQuery struct {
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the ExpenseQuery builder.
-func (_q *ExpenseQuery) Where(ps ...predicate.Expense) *ExpenseQuery {
+// Where adds a new predicate for the TransactionQuery builder.
+func (_q *TransactionQuery) Where(ps ...predicate.Transaction) *TransactionQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *ExpenseQuery) Limit(limit int) *ExpenseQuery {
+func (_q *TransactionQuery) Limit(limit int) *TransactionQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *ExpenseQuery) Offset(offset int) *ExpenseQuery {
+func (_q *TransactionQuery) Offset(offset int) *TransactionQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *ExpenseQuery) Unique(unique bool) *ExpenseQuery {
+func (_q *TransactionQuery) Unique(unique bool) *TransactionQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *ExpenseQuery) Order(o ...expense.OrderOption) *ExpenseQuery {
+func (_q *TransactionQuery) Order(o ...transaction.OrderOption) *TransactionQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryUser chains the current query on the "user" edge.
-func (_q *ExpenseQuery) QueryUser() *UserQuery {
+func (_q *TransactionQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -74,9 +74,9 @@ func (_q *ExpenseQuery) QueryUser() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(expense.Table, expense.FieldID, selector),
+			sqlgraph.From(transaction.Table, transaction.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, expense.UserTable, expense.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, transaction.UserTable, transaction.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -84,21 +84,21 @@ func (_q *ExpenseQuery) QueryUser() *UserQuery {
 	return query
 }
 
-// First returns the first Expense entity from the query.
-// Returns a *NotFoundError when no Expense was found.
-func (_q *ExpenseQuery) First(ctx context.Context) (*Expense, error) {
+// First returns the first Transaction entity from the query.
+// Returns a *NotFoundError when no Transaction was found.
+func (_q *TransactionQuery) First(ctx context.Context) (*Transaction, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{expense.Label}
+		return nil, &NotFoundError{transaction.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *ExpenseQuery) FirstX(ctx context.Context) *Expense {
+func (_q *TransactionQuery) FirstX(ctx context.Context) *Transaction {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -106,22 +106,22 @@ func (_q *ExpenseQuery) FirstX(ctx context.Context) *Expense {
 	return node
 }
 
-// FirstID returns the first Expense ID from the query.
-// Returns a *NotFoundError when no Expense ID was found.
-func (_q *ExpenseQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first Transaction ID from the query.
+// Returns a *NotFoundError when no Transaction ID was found.
+func (_q *TransactionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{expense.Label}
+		err = &NotFoundError{transaction.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *ExpenseQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *TransactionQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -129,10 +129,10 @@ func (_q *ExpenseQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Expense entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Expense entity is found.
-// Returns a *NotFoundError when no Expense entities are found.
-func (_q *ExpenseQuery) Only(ctx context.Context) (*Expense, error) {
+// Only returns a single Transaction entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Transaction entity is found.
+// Returns a *NotFoundError when no Transaction entities are found.
+func (_q *TransactionQuery) Only(ctx context.Context) (*Transaction, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -141,14 +141,14 @@ func (_q *ExpenseQuery) Only(ctx context.Context) (*Expense, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{expense.Label}
+		return nil, &NotFoundError{transaction.Label}
 	default:
-		return nil, &NotSingularError{expense.Label}
+		return nil, &NotSingularError{transaction.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *ExpenseQuery) OnlyX(ctx context.Context) *Expense {
+func (_q *TransactionQuery) OnlyX(ctx context.Context) *Transaction {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -156,10 +156,10 @@ func (_q *ExpenseQuery) OnlyX(ctx context.Context) *Expense {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Expense ID in the query.
-// Returns a *NotSingularError when more than one Expense ID is found.
+// OnlyID is like Only, but returns the only Transaction ID in the query.
+// Returns a *NotSingularError when more than one Transaction ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *ExpenseQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *TransactionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -168,15 +168,15 @@ func (_q *ExpenseQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{expense.Label}
+		err = &NotFoundError{transaction.Label}
 	default:
-		err = &NotSingularError{expense.Label}
+		err = &NotSingularError{transaction.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *ExpenseQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *TransactionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -184,18 +184,18 @@ func (_q *ExpenseQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of Expenses.
-func (_q *ExpenseQuery) All(ctx context.Context) ([]*Expense, error) {
+// All executes the query and returns a list of Transactions.
+func (_q *TransactionQuery) All(ctx context.Context) ([]*Transaction, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Expense, *ExpenseQuery]()
-	return withInterceptors[[]*Expense](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Transaction, *TransactionQuery]()
+	return withInterceptors[[]*Transaction](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *ExpenseQuery) AllX(ctx context.Context) []*Expense {
+func (_q *TransactionQuery) AllX(ctx context.Context) []*Transaction {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -203,20 +203,20 @@ func (_q *ExpenseQuery) AllX(ctx context.Context) []*Expense {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Expense IDs.
-func (_q *ExpenseQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of Transaction IDs.
+func (_q *TransactionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(expense.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(transaction.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *ExpenseQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *TransactionQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -225,16 +225,16 @@ func (_q *ExpenseQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *ExpenseQuery) Count(ctx context.Context) (int, error) {
+func (_q *TransactionQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*ExpenseQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*TransactionQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *ExpenseQuery) CountX(ctx context.Context) int {
+func (_q *TransactionQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -243,7 +243,7 @@ func (_q *ExpenseQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *ExpenseQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *TransactionQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -256,7 +256,7 @@ func (_q *ExpenseQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *ExpenseQuery) ExistX(ctx context.Context) bool {
+func (_q *TransactionQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -264,18 +264,18 @@ func (_q *ExpenseQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the ExpenseQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the TransactionQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *ExpenseQuery) Clone() *ExpenseQuery {
+func (_q *TransactionQuery) Clone() *TransactionQuery {
 	if _q == nil {
 		return nil
 	}
-	return &ExpenseQuery{
+	return &TransactionQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]expense.OrderOption{}, _q.order...),
+		order:      append([]transaction.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Expense{}, _q.predicates...),
+		predicates: append([]predicate.Transaction{}, _q.predicates...),
 		withUser:   _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -285,7 +285,7 @@ func (_q *ExpenseQuery) Clone() *ExpenseQuery {
 
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *ExpenseQuery) WithUser(opts ...func(*UserQuery)) *ExpenseQuery {
+func (_q *TransactionQuery) WithUser(opts ...func(*UserQuery)) *TransactionQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -304,15 +304,15 @@ func (_q *ExpenseQuery) WithUser(opts ...func(*UserQuery)) *ExpenseQuery {
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Expense.Query().
-//		GroupBy(expense.FieldAmount).
+//	client.Transaction.Query().
+//		GroupBy(transaction.FieldAmount).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *ExpenseQuery) GroupBy(field string, fields ...string) *ExpenseGroupBy {
+func (_q *TransactionQuery) GroupBy(field string, fields ...string) *TransactionGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &ExpenseGroupBy{build: _q}
+	grbuild := &TransactionGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = expense.Label
+	grbuild.label = transaction.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -326,23 +326,23 @@ func (_q *ExpenseQuery) GroupBy(field string, fields ...string) *ExpenseGroupBy 
 //		Amount float64 `json:"amount,omitempty"`
 //	}
 //
-//	client.Expense.Query().
-//		Select(expense.FieldAmount).
+//	client.Transaction.Query().
+//		Select(transaction.FieldAmount).
 //		Scan(ctx, &v)
-func (_q *ExpenseQuery) Select(fields ...string) *ExpenseSelect {
+func (_q *TransactionQuery) Select(fields ...string) *TransactionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &ExpenseSelect{ExpenseQuery: _q}
-	sbuild.label = expense.Label
+	sbuild := &TransactionSelect{TransactionQuery: _q}
+	sbuild.label = transaction.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a ExpenseSelect configured with the given aggregations.
-func (_q *ExpenseQuery) Aggregate(fns ...AggregateFunc) *ExpenseSelect {
+// Aggregate returns a TransactionSelect configured with the given aggregations.
+func (_q *TransactionQuery) Aggregate(fns ...AggregateFunc) *TransactionSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *ExpenseQuery) prepareQuery(ctx context.Context) error {
+func (_q *TransactionQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -354,7 +354,7 @@ func (_q *ExpenseQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !expense.ValidColumn(f) {
+		if !transaction.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -368,9 +368,9 @@ func (_q *ExpenseQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *ExpenseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Expense, error) {
+func (_q *TransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Transaction, error) {
 	var (
-		nodes       = []*Expense{}
+		nodes       = []*Transaction{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
@@ -381,13 +381,13 @@ func (_q *ExpenseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Expe
 		withFKs = true
 	}
 	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, expense.ForeignKeys...)
+		_spec.Node.Columns = append(_spec.Node.Columns, transaction.ForeignKeys...)
 	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Expense).scanValues(nil, columns)
+		return (*Transaction).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Expense{config: _q.config}
+		node := &Transaction{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -403,21 +403,21 @@ func (_q *ExpenseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Expe
 	}
 	if query := _q.withUser; query != nil {
 		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *Expense, e *User) { n.Edges.User = e }); err != nil {
+			func(n *Transaction, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *ExpenseQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Expense, init func(*Expense), assign func(*Expense, *User)) error {
+func (_q *TransactionQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Transaction, init func(*Transaction), assign func(*Transaction, *User)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Expense)
+	nodeids := make(map[uuid.UUID][]*Transaction)
 	for i := range nodes {
-		if nodes[i].user_expenses == nil {
+		if nodes[i].user_transactions == nil {
 			continue
 		}
-		fk := *nodes[i].user_expenses
+		fk := *nodes[i].user_transactions
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -434,7 +434,7 @@ func (_q *ExpenseQuery) loadUser(ctx context.Context, query *UserQuery, nodes []
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_expenses" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_transactions" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -443,7 +443,7 @@ func (_q *ExpenseQuery) loadUser(ctx context.Context, query *UserQuery, nodes []
 	return nil
 }
 
-func (_q *ExpenseQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *TransactionQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -452,8 +452,8 @@ func (_q *ExpenseQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *ExpenseQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(expense.Table, expense.Columns, sqlgraph.NewFieldSpec(expense.FieldID, field.TypeUUID))
+func (_q *TransactionQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(transaction.Table, transaction.Columns, sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -462,9 +462,9 @@ func (_q *ExpenseQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, expense.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, transaction.FieldID)
 		for i := range fields {
-			if fields[i] != expense.FieldID {
+			if fields[i] != transaction.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -492,12 +492,12 @@ func (_q *ExpenseQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *ExpenseQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *TransactionQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(expense.Table)
+	t1 := builder.Table(transaction.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = expense.Columns
+		columns = transaction.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -524,28 +524,28 @@ func (_q *ExpenseQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// ExpenseGroupBy is the group-by builder for Expense entities.
-type ExpenseGroupBy struct {
+// TransactionGroupBy is the group-by builder for Transaction entities.
+type TransactionGroupBy struct {
 	selector
-	build *ExpenseQuery
+	build *TransactionQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *ExpenseGroupBy) Aggregate(fns ...AggregateFunc) *ExpenseGroupBy {
+func (_g *TransactionGroupBy) Aggregate(fns ...AggregateFunc) *TransactionGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *ExpenseGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *TransactionGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ExpenseQuery, *ExpenseGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*TransactionQuery, *TransactionGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *ExpenseGroupBy) sqlScan(ctx context.Context, root *ExpenseQuery, v any) error {
+func (_g *TransactionGroupBy) sqlScan(ctx context.Context, root *TransactionQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -572,28 +572,28 @@ func (_g *ExpenseGroupBy) sqlScan(ctx context.Context, root *ExpenseQuery, v any
 	return sql.ScanSlice(rows, v)
 }
 
-// ExpenseSelect is the builder for selecting fields of Expense entities.
-type ExpenseSelect struct {
-	*ExpenseQuery
+// TransactionSelect is the builder for selecting fields of Transaction entities.
+type TransactionSelect struct {
+	*TransactionQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *ExpenseSelect) Aggregate(fns ...AggregateFunc) *ExpenseSelect {
+func (_s *TransactionSelect) Aggregate(fns ...AggregateFunc) *TransactionSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *ExpenseSelect) Scan(ctx context.Context, v any) error {
+func (_s *TransactionSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ExpenseQuery, *ExpenseSelect](ctx, _s.ExpenseQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*TransactionQuery, *TransactionSelect](ctx, _s.TransactionQuery, _s, _s.inters, v)
 }
 
-func (_s *ExpenseSelect) sqlScan(ctx context.Context, root *ExpenseQuery, v any) error {
+func (_s *TransactionSelect) sqlScan(ctx context.Context, root *TransactionQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {
