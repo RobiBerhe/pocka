@@ -34,9 +34,18 @@ type ParsedTransaction struct {
 	Metadata map[string]interface{}
 }
 
+type WeeklyStats struct {
+	TotalIncome    float64
+	TotalExpense   float64
+	NetBalance     float64
+	Currency       string
+	CategoryTotals map[string]float64
+	Streak         int
+	StartDate      time.Time
+	EndDate        time.Time
+}
+
 // TransactionParser defines how text should be parsed into structured transaction data.
-// This interface is designed to be implemented by both simple Regex-based parsers
-// and advanced LLM-based parsers in the future.
 type TransactionParser interface {
 	Parse(ctx context.Context, input string, userCurrency string) (*ParsedTransaction, error)
 }
@@ -44,5 +53,10 @@ type TransactionParser interface {
 // TransactionService handles the core business logic around transactions.
 type TransactionService interface {
 	LogTransaction(ctx context.Context, userID int64, text string, userCurrency string) (*ParsedTransaction, error)
-	GetWeeklyStats(ctx context.Context, userID int64) (string, error)
+	GetWeeklyStats(ctx context.Context, userID int64) (*WeeklyStats, error)
+}
+
+// ReportService generates visual reports and summary cards.
+type ReportService interface {
+	GenerateWeeklyCard(ctx context.Context, stats *WeeklyStats) ([]byte, error)
 }

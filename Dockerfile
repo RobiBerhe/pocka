@@ -17,7 +17,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o pocka-bot ./cmd/b
 # Final stage
 FROM alpine:latest  
 
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata ttf-dejavu ttf-freefont font-noto-emoji fontconfig
 
 WORKDIR /root/
 

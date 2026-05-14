@@ -80,11 +80,11 @@ func (s *transactionService) updateStreak(ctx context.Context, tx *ent.Tx, u *en
 	return err
 }
 
-func (s *transactionService) GetWeeklyStats(ctx context.Context, telegramID int64) (string, error) {
+func (s *transactionService) GetWeeklyStats(ctx context.Context, telegramID int64) (*core.WeeklyStats, error) {
 	// 1. Get user with transactions
 	u, err := s.db.User.Query().Where(user.TelegramIDEQ(telegramID)).WithTransactions().Only(ctx)
 	if err != nil {
-		return "", fmt.Errorf("user not found: %w", err)
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	// 2. Calculate the start of the week
@@ -93,42 +93,27 @@ func (s *transactionService) GetWeeklyStats(ctx context.Context, telegramID int6
 	// 3. Query transactions
 	transactions, err := u.QueryTransactions().Where(transaction.CreatedAtGTE(weekAgo)).All(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to query transactions: %w", err)
+		return nil, fmt.Errorf("failed to query transactions: %w", err)
 	}
 
-	if len(transactions) == 0 {
-		return "You haven't logged any transactions in the last 7 days. Start by sending something like 'coffee 40'!", nil
+	stats := &core.WeeklyStats{
+		Currency:       u.Currency,
+		Streak:         u.CurrentStreak,
+		StartDate:      weekAgo,
+		EndDate:        time.Now(),
+		CategoryTotals: make(map[string]float64),
 	}
-
-	var totalIncome, totalExpense float64
-	categoryTotals := make(map[string]float64)
 
 	for _, t := range transactions {
 		if t.Type == transaction.TypeINCOME {
-			totalIncome += t.Amount
+			stats.TotalIncome += t.Amount
 		} else {
-			totalExpense += t.Amount
-			categoryTotals[t.Category] += t.Amount
+			stats.TotalExpense += t.Amount
+			stats.CategoryTotals[t.Category] += t.Amount
 		}
 	}
 
-	net := totalIncome - totalExpense
+	stats.NetBalance = stats.TotalIncome - stats.TotalExpense
 
-	// 4. Format response
-	resp := "📊 *Weekly Summary (Last 7 Days)*\n\n"
-	resp += fmt.Sprintf("💰 Income: *%.2f %s*\n", totalIncome, u.Currency)
-	resp += fmt.Sprintf("💸 Expense: *%.2f %s*\n", totalExpense, u.Currency)
-	resp += fmt.Sprintf("⚖️ Net: *%.2f %s*\n\n", net, u.Currency)
-
-	if totalExpense > 0 {
-		resp += "*Top Expenses:*\n"
-		for cat, catTotal := range categoryTotals {
-			percentage := (catTotal / totalExpense) * 100
-			resp += fmt.Sprintf("🔹 %s: %.2f (%.0f%%)\n", cat, catTotal, percentage)
-		}
-	}
-
-	resp += "\n_Keep tracking to maintain your streak! 🔥_"
-
-	return resp, nil
+	return stats, nil
 }
