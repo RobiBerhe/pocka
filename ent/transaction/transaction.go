@@ -26,6 +26,10 @@ const (
 	FieldCategory = "category"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// FieldMerchant holds the string denoting the merchant field in the database.
+	FieldMerchant = "merchant"
+	// FieldEmoji holds the string denoting the emoji field in the database.
+	FieldEmoji = "emoji"
 	// FieldRawInput holds the string denoting the raw_input field in the database.
 	FieldRawInput = "raw_input"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -51,6 +55,8 @@ var Columns = []string{
 	FieldCurrency,
 	FieldCategory,
 	FieldDescription,
+	FieldMerchant,
+	FieldEmoji,
 	FieldRawInput,
 	FieldCreatedAt,
 }
@@ -142,6 +148,16 @@ func ByCategory(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByMerchant orders the results by the merchant field.
+func ByMerchant(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMerchant, opts...).ToFunc()
+}
+
+// ByEmoji orders the results by the emoji field.
+func ByEmoji(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEmoji, opts...).ToFunc()
 }
 
 // ByRawInput orders the results by the raw_input field.

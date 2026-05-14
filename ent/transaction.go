@@ -29,6 +29,10 @@ type Transaction struct {
 	Category string `json:"category,omitempty"`
 	// Optional description of the transaction
 	Description string `json:"description,omitempty"`
+	// The merchant or recipient involved in the transaction
+	Merchant string `json:"merchant,omitempty"`
+	// An AI-generated emoji representing the category
+	Emoji string `json:"emoji,omitempty"`
 	// The original text message sent by the user
 	RawInput string `json:"raw_input,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -67,7 +71,7 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case transaction.FieldAmount:
 			values[i] = new(sql.NullFloat64)
-		case transaction.FieldType, transaction.FieldCurrency, transaction.FieldCategory, transaction.FieldDescription, transaction.FieldRawInput:
+		case transaction.FieldType, transaction.FieldCurrency, transaction.FieldCategory, transaction.FieldDescription, transaction.FieldMerchant, transaction.FieldEmoji, transaction.FieldRawInput:
 			values[i] = new(sql.NullString)
 		case transaction.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -125,6 +129,18 @@ func (_m *Transaction) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
 				_m.Description = value.String
+			}
+		case transaction.FieldMerchant:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field merchant", values[i])
+			} else if value.Valid {
+				_m.Merchant = value.String
+			}
+		case transaction.FieldEmoji:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field emoji", values[i])
+			} else if value.Valid {
+				_m.Emoji = value.String
 			}
 		case transaction.FieldRawInput:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -200,6 +216,12 @@ func (_m *Transaction) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)
+	builder.WriteString(", ")
+	builder.WriteString("merchant=")
+	builder.WriteString(_m.Merchant)
+	builder.WriteString(", ")
+	builder.WriteString("emoji=")
+	builder.WriteString(_m.Emoji)
 	builder.WriteString(", ")
 	builder.WriteString("raw_input=")
 	builder.WriteString(_m.RawInput)

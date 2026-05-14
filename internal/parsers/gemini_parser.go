@@ -42,6 +42,8 @@ type geminiTransaction struct {
 	Amount      float64 `json:"amount"`
 	Type        string  `json:"type"`
 	Category    string  `json:"category"`
+	Emoji       string  `json:"emoji"`
+	Merchant    string  `json:"merchant"`
 	Description string  `json:"description"`
 }
 
@@ -55,9 +57,13 @@ Extract financial transactions from the user's message.
 - Languages: Support English, Amharic, and others.
 
 Output ONLY a JSON array of transactions.
-Schema: [{"amount": float, "type": "INCOME"|"EXPENSE", "category": string, "description": string}]
+Schema: [{"amount": float, "type": "INCOME"|"EXPENSE", "category": string, "emoji": string, "merchant": string, "description": string}]
 
-Categories: Food, Transport, Rent, Salary, Entertainment, Health, Utilities, Shopping, Misc.`, 
+Guidelines:
+- "category": Be smart and dynamic. Instead of generic "Misc", use short, logical categories (e.g., "Dining", "Grocery", "Transport", "Freelance", "Investment", "Sales", "Gifts").
+- "emoji": Provide a SINGLE relevant emoji for the category (e.g., 🍔, 🛒, 🚕, 💻, 📈, 👟, 🎁).
+- "merchant": Extract the recipient or source if mentioned (e.g., "Uber", "Starbucks", "John"), otherwise leave empty.
+- "type": Determine if it's "INCOME" or "EXPENSE" based on the context.`, 
 	now.Format("Monday, Jan 02, 2006"), userCurrency)
 
 	p.model.SystemInstruction = &genai.Content{
@@ -104,6 +110,8 @@ Categories: Food, Transport, Rent, Salary, Entertainment, Health, Utilities, Sho
 			Type:        txType,
 			Category:    gt.Category,
 			Description: gt.Description,
+			Merchant:    gt.Merchant,
+			Emoji:       gt.Emoji,
 			Currency:    userCurrency,
 			RawInput:    input,
 			Date:        now, // AI could potentially extract dates too in the future

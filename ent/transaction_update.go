@@ -112,6 +112,46 @@ func (_u *TransactionUpdate) ClearDescription() *TransactionUpdate {
 	return _u
 }
 
+// SetMerchant sets the "merchant" field.
+func (_u *TransactionUpdate) SetMerchant(v string) *TransactionUpdate {
+	_u.mutation.SetMerchant(v)
+	return _u
+}
+
+// SetNillableMerchant sets the "merchant" field if the given value is not nil.
+func (_u *TransactionUpdate) SetNillableMerchant(v *string) *TransactionUpdate {
+	if v != nil {
+		_u.SetMerchant(*v)
+	}
+	return _u
+}
+
+// ClearMerchant clears the value of the "merchant" field.
+func (_u *TransactionUpdate) ClearMerchant() *TransactionUpdate {
+	_u.mutation.ClearMerchant()
+	return _u
+}
+
+// SetEmoji sets the "emoji" field.
+func (_u *TransactionUpdate) SetEmoji(v string) *TransactionUpdate {
+	_u.mutation.SetEmoji(v)
+	return _u
+}
+
+// SetNillableEmoji sets the "emoji" field if the given value is not nil.
+func (_u *TransactionUpdate) SetNillableEmoji(v *string) *TransactionUpdate {
+	if v != nil {
+		_u.SetEmoji(*v)
+	}
+	return _u
+}
+
+// ClearEmoji clears the value of the "emoji" field.
+func (_u *TransactionUpdate) ClearEmoji() *TransactionUpdate {
+	_u.mutation.ClearEmoji()
+	return _u
+}
+
 // SetRawInput sets the "raw_input" field.
 func (_u *TransactionUpdate) SetRawInput(v string) *TransactionUpdate {
 	_u.mutation.SetRawInput(v)
@@ -220,6 +260,18 @@ func (_u *TransactionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(transaction.FieldDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.Merchant(); ok {
+		_spec.SetField(transaction.FieldMerchant, field.TypeString, value)
+	}
+	if _u.mutation.MerchantCleared() {
+		_spec.ClearField(transaction.FieldMerchant, field.TypeString)
+	}
+	if value, ok := _u.mutation.Emoji(); ok {
+		_spec.SetField(transaction.FieldEmoji, field.TypeString, value)
+	}
+	if _u.mutation.EmojiCleared() {
+		_spec.ClearField(transaction.FieldEmoji, field.TypeString)
 	}
 	if value, ok := _u.mutation.RawInput(); ok {
 		_spec.SetField(transaction.FieldRawInput, field.TypeString, value)
@@ -353,6 +405,46 @@ func (_u *TransactionUpdateOne) SetNillableDescription(v *string) *TransactionUp
 // ClearDescription clears the value of the "description" field.
 func (_u *TransactionUpdateOne) ClearDescription() *TransactionUpdateOne {
 	_u.mutation.ClearDescription()
+	return _u
+}
+
+// SetMerchant sets the "merchant" field.
+func (_u *TransactionUpdateOne) SetMerchant(v string) *TransactionUpdateOne {
+	_u.mutation.SetMerchant(v)
+	return _u
+}
+
+// SetNillableMerchant sets the "merchant" field if the given value is not nil.
+func (_u *TransactionUpdateOne) SetNillableMerchant(v *string) *TransactionUpdateOne {
+	if v != nil {
+		_u.SetMerchant(*v)
+	}
+	return _u
+}
+
+// ClearMerchant clears the value of the "merchant" field.
+func (_u *TransactionUpdateOne) ClearMerchant() *TransactionUpdateOne {
+	_u.mutation.ClearMerchant()
+	return _u
+}
+
+// SetEmoji sets the "emoji" field.
+func (_u *TransactionUpdateOne) SetEmoji(v string) *TransactionUpdateOne {
+	_u.mutation.SetEmoji(v)
+	return _u
+}
+
+// SetNillableEmoji sets the "emoji" field if the given value is not nil.
+func (_u *TransactionUpdateOne) SetNillableEmoji(v *string) *TransactionUpdateOne {
+	if v != nil {
+		_u.SetEmoji(*v)
+	}
+	return _u
+}
+
+// ClearEmoji clears the value of the "emoji" field.
+func (_u *TransactionUpdateOne) ClearEmoji() *TransactionUpdateOne {
+	_u.mutation.ClearEmoji()
 	return _u
 }
 
@@ -494,6 +586,18 @@ func (_u *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transaction
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(transaction.FieldDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.Merchant(); ok {
+		_spec.SetField(transaction.FieldMerchant, field.TypeString, value)
+	}
+	if _u.mutation.MerchantCleared() {
+		_spec.ClearField(transaction.FieldMerchant, field.TypeString)
+	}
+	if value, ok := _u.mutation.Emoji(); ok {
+		_spec.SetField(transaction.FieldEmoji, field.TypeString, value)
+	}
+	if _u.mutation.EmojiCleared() {
+		_spec.ClearField(transaction.FieldEmoji, field.TypeString)
 	}
 	if value, ok := _u.mutation.RawInput(); ok {
 		_spec.SetField(transaction.FieldRawInput, field.TypeString, value)

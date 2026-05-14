@@ -34,6 +34,12 @@ func (Transaction) Fields() []ent.Field {
 		field.String("description").
 			Optional().
 			Comment("Optional description of the transaction"),
+		field.String("merchant").
+			Optional().
+			Comment("The merchant or recipient involved in the transaction"),
+		field.String("emoji").
+			Optional().
+			Comment("An AI-generated emoji representing the category"),
 		field.String("raw_input").
 			Comment("The original text message sent by the user"),
 		field.Time("created_at").

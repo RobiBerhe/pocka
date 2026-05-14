@@ -76,6 +76,16 @@ func Description(v string) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldDescription, v))
 }
 
+// Merchant applies equality check predicate on the "merchant" field. It's identical to MerchantEQ.
+func Merchant(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEQ(FieldMerchant, v))
+}
+
+// Emoji applies equality check predicate on the "emoji" field. It's identical to EmojiEQ.
+func Emoji(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEQ(FieldEmoji, v))
+}
+
 // RawInput applies equality check predicate on the "raw_input" field. It's identical to RawInputEQ.
 func RawInput(v string) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldRawInput, v))
@@ -349,6 +359,156 @@ func DescriptionEqualFold(v string) predicate.Transaction {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.Transaction {
 	return predicate.Transaction(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// MerchantEQ applies the EQ predicate on the "merchant" field.
+func MerchantEQ(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEQ(FieldMerchant, v))
+}
+
+// MerchantNEQ applies the NEQ predicate on the "merchant" field.
+func MerchantNEQ(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldNEQ(FieldMerchant, v))
+}
+
+// MerchantIn applies the In predicate on the "merchant" field.
+func MerchantIn(vs ...string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldIn(FieldMerchant, vs...))
+}
+
+// MerchantNotIn applies the NotIn predicate on the "merchant" field.
+func MerchantNotIn(vs ...string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldNotIn(FieldMerchant, vs...))
+}
+
+// MerchantGT applies the GT predicate on the "merchant" field.
+func MerchantGT(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldGT(FieldMerchant, v))
+}
+
+// MerchantGTE applies the GTE predicate on the "merchant" field.
+func MerchantGTE(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldGTE(FieldMerchant, v))
+}
+
+// MerchantLT applies the LT predicate on the "merchant" field.
+func MerchantLT(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldLT(FieldMerchant, v))
+}
+
+// MerchantLTE applies the LTE predicate on the "merchant" field.
+func MerchantLTE(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldLTE(FieldMerchant, v))
+}
+
+// MerchantContains applies the Contains predicate on the "merchant" field.
+func MerchantContains(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldContains(FieldMerchant, v))
+}
+
+// MerchantHasPrefix applies the HasPrefix predicate on the "merchant" field.
+func MerchantHasPrefix(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldHasPrefix(FieldMerchant, v))
+}
+
+// MerchantHasSuffix applies the HasSuffix predicate on the "merchant" field.
+func MerchantHasSuffix(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldHasSuffix(FieldMerchant, v))
+}
+
+// MerchantIsNil applies the IsNil predicate on the "merchant" field.
+func MerchantIsNil() predicate.Transaction {
+	return predicate.Transaction(sql.FieldIsNull(FieldMerchant))
+}
+
+// MerchantNotNil applies the NotNil predicate on the "merchant" field.
+func MerchantNotNil() predicate.Transaction {
+	return predicate.Transaction(sql.FieldNotNull(FieldMerchant))
+}
+
+// MerchantEqualFold applies the EqualFold predicate on the "merchant" field.
+func MerchantEqualFold(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEqualFold(FieldMerchant, v))
+}
+
+// MerchantContainsFold applies the ContainsFold predicate on the "merchant" field.
+func MerchantContainsFold(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldContainsFold(FieldMerchant, v))
+}
+
+// EmojiEQ applies the EQ predicate on the "emoji" field.
+func EmojiEQ(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEQ(FieldEmoji, v))
+}
+
+// EmojiNEQ applies the NEQ predicate on the "emoji" field.
+func EmojiNEQ(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldNEQ(FieldEmoji, v))
+}
+
+// EmojiIn applies the In predicate on the "emoji" field.
+func EmojiIn(vs ...string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldIn(FieldEmoji, vs...))
+}
+
+// EmojiNotIn applies the NotIn predicate on the "emoji" field.
+func EmojiNotIn(vs ...string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldNotIn(FieldEmoji, vs...))
+}
+
+// EmojiGT applies the GT predicate on the "emoji" field.
+func EmojiGT(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldGT(FieldEmoji, v))
+}
+
+// EmojiGTE applies the GTE predicate on the "emoji" field.
+func EmojiGTE(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldGTE(FieldEmoji, v))
+}
+
+// EmojiLT applies the LT predicate on the "emoji" field.
+func EmojiLT(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldLT(FieldEmoji, v))
+}
+
+// EmojiLTE applies the LTE predicate on the "emoji" field.
+func EmojiLTE(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldLTE(FieldEmoji, v))
+}
+
+// EmojiContains applies the Contains predicate on the "emoji" field.
+func EmojiContains(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldContains(FieldEmoji, v))
+}
+
+// EmojiHasPrefix applies the HasPrefix predicate on the "emoji" field.
+func EmojiHasPrefix(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldHasPrefix(FieldEmoji, v))
+}
+
+// EmojiHasSuffix applies the HasSuffix predicate on the "emoji" field.
+func EmojiHasSuffix(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldHasSuffix(FieldEmoji, v))
+}
+
+// EmojiIsNil applies the IsNil predicate on the "emoji" field.
+func EmojiIsNil() predicate.Transaction {
+	return predicate.Transaction(sql.FieldIsNull(FieldEmoji))
+}
+
+// EmojiNotNil applies the NotNil predicate on the "emoji" field.
+func EmojiNotNil() predicate.Transaction {
+	return predicate.Transaction(sql.FieldNotNull(FieldEmoji))
+}
+
+// EmojiEqualFold applies the EqualFold predicate on the "emoji" field.
+func EmojiEqualFold(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldEqualFold(FieldEmoji, v))
+}
+
+// EmojiContainsFold applies the ContainsFold predicate on the "emoji" field.
+func EmojiContainsFold(v string) predicate.Transaction {
+	return predicate.Transaction(sql.FieldContainsFold(FieldEmoji, v))
 }
 
 // RawInputEQ applies the EQ predicate on the "raw_input" field.

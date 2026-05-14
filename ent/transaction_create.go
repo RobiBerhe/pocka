@@ -76,6 +76,34 @@ func (_c *TransactionCreate) SetNillableDescription(v *string) *TransactionCreat
 	return _c
 }
 
+// SetMerchant sets the "merchant" field.
+func (_c *TransactionCreate) SetMerchant(v string) *TransactionCreate {
+	_c.mutation.SetMerchant(v)
+	return _c
+}
+
+// SetNillableMerchant sets the "merchant" field if the given value is not nil.
+func (_c *TransactionCreate) SetNillableMerchant(v *string) *TransactionCreate {
+	if v != nil {
+		_c.SetMerchant(*v)
+	}
+	return _c
+}
+
+// SetEmoji sets the "emoji" field.
+func (_c *TransactionCreate) SetEmoji(v string) *TransactionCreate {
+	_c.mutation.SetEmoji(v)
+	return _c
+}
+
+// SetNillableEmoji sets the "emoji" field if the given value is not nil.
+func (_c *TransactionCreate) SetNillableEmoji(v *string) *TransactionCreate {
+	if v != nil {
+		_c.SetEmoji(*v)
+	}
+	return _c
+}
+
 // SetRawInput sets the "raw_input" field.
 func (_c *TransactionCreate) SetRawInput(v string) *TransactionCreate {
 	_c.mutation.SetRawInput(v)
@@ -256,6 +284,14 @@ func (_c *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(transaction.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if value, ok := _c.mutation.Merchant(); ok {
+		_spec.SetField(transaction.FieldMerchant, field.TypeString, value)
+		_node.Merchant = value
+	}
+	if value, ok := _c.mutation.Emoji(); ok {
+		_spec.SetField(transaction.FieldEmoji, field.TypeString, value)
+		_node.Emoji = value
 	}
 	if value, ok := _c.mutation.RawInput(); ok {
 		_spec.SetField(transaction.FieldRawInput, field.TypeString, value)

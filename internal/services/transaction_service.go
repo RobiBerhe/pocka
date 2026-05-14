@@ -49,6 +49,8 @@ func (s *transactionService) LogTransaction(ctx context.Context, telegramID int6
 			SetType(transaction.Type(parsed.Type)).
 			SetCategory(parsed.Category).
 			SetDescription(parsed.Description).
+			SetMerchant(parsed.Merchant).
+			SetEmoji(parsed.Emoji).
 			SetCurrency(parsed.Currency).
 			SetRawInput(text).
 			SetUser(u).

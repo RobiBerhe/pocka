@@ -27,6 +27,8 @@ type ParsedTransaction struct {
 	Type        TransactionType
 	Category    string
 	Description string
+	Merchant    string
+	Emoji       string
 	Currency    string
 	RawInput    string
 	Date        time.Time

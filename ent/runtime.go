@@ -22,7 +22,7 @@ func init() {
 	// transaction.DefaultCurrency holds the default value on creation for the currency field.
 	transaction.DefaultCurrency = transactionDescCurrency.Default.(string)
 	// transactionDescCreatedAt is the schema descriptor for created_at field.
-	transactionDescCreatedAt := transactionFields[7].Descriptor()
+	transactionDescCreatedAt := transactionFields[9].Descriptor()
 	// transaction.DefaultCreatedAt holds the default value on creation for the created_at field.
 	transaction.DefaultCreatedAt = transactionDescCreatedAt.Default.(func() time.Time)
 	// transactionDescID is the schema descriptor for id field.

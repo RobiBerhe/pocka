@@ -16,6 +16,8 @@ var (
 		{Name: "currency", Type: field.TypeString, Default: "ETB"},
 		{Name: "category", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "merchant", Type: field.TypeString, Nullable: true},
+		{Name: "emoji", Type: field.TypeString, Nullable: true},
 		{Name: "raw_input", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "user_transactions", Type: field.TypeUUID},
@@ -28,7 +30,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "transactions_users_transactions",
-				Columns:    []*schema.Column{TransactionsColumns[8]},
+				Columns:    []*schema.Column{TransactionsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

@@ -42,6 +42,8 @@ type TransactionMutation struct {
 	currency      *string
 	category      *string
 	description   *string
+	merchant      *string
+	emoji         *string
 	raw_input     *string
 	created_at    *time.Time
 	clearedFields map[string]struct{}
@@ -369,6 +371,104 @@ func (m *TransactionMutation) ResetDescription() {
 	delete(m.clearedFields, transaction.FieldDescription)
 }
 
+// SetMerchant sets the "merchant" field.
+func (m *TransactionMutation) SetMerchant(s string) {
+	m.merchant = &s
+}
+
+// Merchant returns the value of the "merchant" field in the mutation.
+func (m *TransactionMutation) Merchant() (r string, exists bool) {
+	v := m.merchant
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMerchant returns the old "merchant" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionMutation) OldMerchant(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMerchant is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMerchant requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMerchant: %w", err)
+	}
+	return oldValue.Merchant, nil
+}
+
+// ClearMerchant clears the value of the "merchant" field.
+func (m *TransactionMutation) ClearMerchant() {
+	m.merchant = nil
+	m.clearedFields[transaction.FieldMerchant] = struct{}{}
+}
+
+// MerchantCleared returns if the "merchant" field was cleared in this mutation.
+func (m *TransactionMutation) MerchantCleared() bool {
+	_, ok := m.clearedFields[transaction.FieldMerchant]
+	return ok
+}
+
+// ResetMerchant resets all changes to the "merchant" field.
+func (m *TransactionMutation) ResetMerchant() {
+	m.merchant = nil
+	delete(m.clearedFields, transaction.FieldMerchant)
+}
+
+// SetEmoji sets the "emoji" field.
+func (m *TransactionMutation) SetEmoji(s string) {
+	m.emoji = &s
+}
+
+// Emoji returns the value of the "emoji" field in the mutation.
+func (m *TransactionMutation) Emoji() (r string, exists bool) {
+	v := m.emoji
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmoji returns the old "emoji" field's value of the Transaction entity.
+// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransactionMutation) OldEmoji(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmoji is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmoji requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmoji: %w", err)
+	}
+	return oldValue.Emoji, nil
+}
+
+// ClearEmoji clears the value of the "emoji" field.
+func (m *TransactionMutation) ClearEmoji() {
+	m.emoji = nil
+	m.clearedFields[transaction.FieldEmoji] = struct{}{}
+}
+
+// EmojiCleared returns if the "emoji" field was cleared in this mutation.
+func (m *TransactionMutation) EmojiCleared() bool {
+	_, ok := m.clearedFields[transaction.FieldEmoji]
+	return ok
+}
+
+// ResetEmoji resets all changes to the "emoji" field.
+func (m *TransactionMutation) ResetEmoji() {
+	m.emoji = nil
+	delete(m.clearedFields, transaction.FieldEmoji)
+}
+
 // SetRawInput sets the "raw_input" field.
 func (m *TransactionMutation) SetRawInput(s string) {
 	m.raw_input = &s
@@ -514,7 +614,7 @@ func (m *TransactionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TransactionMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 9)
 	if m.amount != nil {
 		fields = append(fields, transaction.FieldAmount)
 	}
@@ -529,6 +629,12 @@ func (m *TransactionMutation) Fields() []string {
 	}
 	if m.description != nil {
 		fields = append(fields, transaction.FieldDescription)
+	}
+	if m.merchant != nil {
+		fields = append(fields, transaction.FieldMerchant)
+	}
+	if m.emoji != nil {
+		fields = append(fields, transaction.FieldEmoji)
 	}
 	if m.raw_input != nil {
 		fields = append(fields, transaction.FieldRawInput)
@@ -554,6 +660,10 @@ func (m *TransactionMutation) Field(name string) (ent.Value, bool) {
 		return m.Category()
 	case transaction.FieldDescription:
 		return m.Description()
+	case transaction.FieldMerchant:
+		return m.Merchant()
+	case transaction.FieldEmoji:
+		return m.Emoji()
 	case transaction.FieldRawInput:
 		return m.RawInput()
 	case transaction.FieldCreatedAt:
@@ -577,6 +687,10 @@ func (m *TransactionMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldCategory(ctx)
 	case transaction.FieldDescription:
 		return m.OldDescription(ctx)
+	case transaction.FieldMerchant:
+		return m.OldMerchant(ctx)
+	case transaction.FieldEmoji:
+		return m.OldEmoji(ctx)
 	case transaction.FieldRawInput:
 		return m.OldRawInput(ctx)
 	case transaction.FieldCreatedAt:
@@ -624,6 +738,20 @@ func (m *TransactionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
+		return nil
+	case transaction.FieldMerchant:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMerchant(v)
+		return nil
+	case transaction.FieldEmoji:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmoji(v)
 		return nil
 	case transaction.FieldRawInput:
 		v, ok := value.(string)
@@ -687,6 +815,12 @@ func (m *TransactionMutation) ClearedFields() []string {
 	if m.FieldCleared(transaction.FieldDescription) {
 		fields = append(fields, transaction.FieldDescription)
 	}
+	if m.FieldCleared(transaction.FieldMerchant) {
+		fields = append(fields, transaction.FieldMerchant)
+	}
+	if m.FieldCleared(transaction.FieldEmoji) {
+		fields = append(fields, transaction.FieldEmoji)
+	}
 	return fields
 }
 
@@ -703,6 +837,12 @@ func (m *TransactionMutation) ClearField(name string) error {
 	switch name {
 	case transaction.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case transaction.FieldMerchant:
+		m.ClearMerchant()
+		return nil
+	case transaction.FieldEmoji:
+		m.ClearEmoji()
 		return nil
 	}
 	return fmt.Errorf("unknown Transaction nullable field %s", name)
@@ -726,6 +866,12 @@ func (m *TransactionMutation) ResetField(name string) error {
 		return nil
 	case transaction.FieldDescription:
 		m.ResetDescription()
+		return nil
+	case transaction.FieldMerchant:
+		m.ResetMerchant()
+		return nil
+	case transaction.FieldEmoji:
+		m.ResetEmoji()
 		return nil
 	case transaction.FieldRawInput:
 		m.ResetRawInput()
