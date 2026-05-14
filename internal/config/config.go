@@ -13,6 +13,9 @@ type Config struct {
 	Port         string `envconfig:"PORT" default:"8080"`
 	WebhookURL   string `envconfig:"WEBHOOK_URL"`
 	Environment  string `envconfig:"ENVIRONMENT" default:"development"`
+	GeminiAPIKey string `envconfig:"GEMINI_API_KEY"`
+	GeminiModel  string `envconfig:"GEMINI_MODEL" default:"gemini-1.5-flash"`
+	AIEnabled    bool   `envconfig:"AI_ENABLED" default:"false"`
 }
 
 func LoadConfig() *Config {

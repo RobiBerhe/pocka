@@ -47,12 +47,12 @@ type WeeklyStats struct {
 
 // TransactionParser defines how text should be parsed into structured transaction data.
 type TransactionParser interface {
-	Parse(ctx context.Context, input string, userCurrency string) (*ParsedTransaction, error)
+	Parse(ctx context.Context, input string, userCurrency string) ([]*ParsedTransaction, error)
 }
 
 // TransactionService handles the core business logic around transactions.
 type TransactionService interface {
-	LogTransaction(ctx context.Context, userID int64, text string, userCurrency string) (*ParsedTransaction, error)
+	LogTransaction(ctx context.Context, userID int64, text string, userCurrency string) ([]*ParsedTransaction, error)
 	GetWeeklyStats(ctx context.Context, userID int64) (*WeeklyStats, error)
 }
 

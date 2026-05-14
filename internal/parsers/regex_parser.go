@@ -40,7 +40,7 @@ func NewRegexParser() *RegexParser {
 }
 
 // Parse extracts the amount, category, and type from the input string.
-func (p *RegexParser) Parse(ctx context.Context, input string, userCurrency string) (*core.ParsedTransaction, error) {
+func (p *RegexParser) Parse(ctx context.Context, input string, userCurrency string) ([]*core.ParsedTransaction, error) {
 	input = strings.TrimSpace(input)
 	if input == "" {
 		return nil, ErrInvalidFormat
@@ -107,14 +107,16 @@ func (p *RegexParser) Parse(ctx context.Context, input string, userCurrency stri
 		}
 	}
 
-	return &core.ParsedTransaction{
-		Amount:      amount,
-		Type:        txType,
-		Category:    category,
-		Description: description,
-		Currency:    userCurrency,
-		RawInput:    input,
-		Metadata:    make(map[string]interface{}),
+	return []*core.ParsedTransaction{
+		{
+			Amount:      amount,
+			Type:        txType,
+			Category:    category,
+			Description: description,
+			Currency:    userCurrency,
+			RawInput:    input,
+			Metadata:    make(map[string]interface{}),
+		},
 	}, nil
 }
 

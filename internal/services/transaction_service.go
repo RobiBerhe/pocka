@@ -24,8 +24,8 @@ func NewTransactionService(db *ent.Client, parser core.TransactionParser) core.T
 	}
 }
 
-func (s *transactionService) LogTransaction(ctx context.Context, telegramID int64, text string, userCurrency string) (*core.ParsedTransaction, error) {
-	parsed, err := s.parser.Parse(ctx, text, userCurrency)
+func (s *transactionService) LogTransaction(ctx context.Context, telegramID int64, text string, userCurrency string) ([]*core.ParsedTransaction, error) {
+	parsedList, err := s.parser.Parse(ctx, text, userCurrency)
 	if err != nil {
 		return nil, err
 	}
@@ -36,40 +36,41 @@ func (s *transactionService) LogTransaction(ctx context.Context, telegramID int6
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// Start a transaction
+	// Start a database transaction to ensure all or nothing
 	tx, err := s.db.Tx(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed starting transaction: %w", err)
+		return nil, fmt.Errorf("failed starting database transaction: %w", err)
 	}
 
-	// Create the transaction
-	_, err = tx.Transaction.Create().
-		SetAmount(parsed.Amount).
-		SetType(transaction.Type(parsed.Type)).
-		SetCategory(parsed.Category).
-		SetDescription(parsed.Description).
-		SetCurrency(parsed.Currency).
-		SetRawInput(text).
-		SetUser(u).
-		Save(ctx)
+	for _, parsed := range parsedList {
+		// Create the transaction
+		_, err = tx.Transaction.Create().
+			SetAmount(parsed.Amount).
+			SetType(transaction.Type(parsed.Type)).
+			SetCategory(parsed.Category).
+			SetDescription(parsed.Description).
+			SetCurrency(parsed.Currency).
+			SetRawInput(text).
+			SetUser(u).
+			Save(ctx)
 
-	if err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed saving transaction: %w", err)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("failed saving transaction: %w", err)
+		}
 	}
 
-	// Handle streak logic
+	// Handle streak logic (once per message is fine)
 	err = s.updateStreak(ctx, tx, u)
 	if err != nil {
-		// Log but don't fail the transaction creation
 		slog.Error("Failed to update streak", "user_id", u.TelegramID, "error", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed committing transaction: %w", err)
+		return nil, fmt.Errorf("failed committing transactions: %w", err)
 	}
 
-	return parsed, nil
+	return parsedList, nil
 }
 
 // updateStreak increments the streak if the last transaction was yesterday in UTC.

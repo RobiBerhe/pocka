@@ -61,7 +61,7 @@ func (s *reportService) GenerateWeeklyCard(ctx context.Context, stats *core.Week
 	for _, path := range fontPaths {
 		if _, err := os.Stat(path); err == nil {
 			fontPath = path
-			slog.Info("Selected font path", "path", path)
+			slog.Debug("Selected font path", "path", path)
 			break
 		}
 	}

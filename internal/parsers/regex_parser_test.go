@@ -32,7 +32,7 @@ func TestRegexParser(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			parsed, err := parser.Parse(ctx, tc.input, "ETB")
+			parsedList, err := parser.Parse(ctx, tc.input, "ETB")
 			
 			if tc.expectErr {
 				if err == nil {
@@ -44,6 +44,12 @@ func TestRegexParser(t *testing.T) {
 			if err != nil {
 				t.Fatalf("did not expect error, got: %v", err)
 			}
+
+			if len(parsedList) == 0 {
+				t.Fatalf("expected at least one transaction, got zero")
+			}
+			
+			parsed := parsedList[0]
 			
 			if parsed.Amount != tc.expectedAmt {
 				t.Errorf("expected amount %.2f, got %.2f", tc.expectedAmt, parsed.Amount)
