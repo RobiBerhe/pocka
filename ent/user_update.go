@@ -9,6 +9,7 @@ import (
 	"pocka/ent/predicate"
 	"pocka/ent/transaction"
 	"pocka/ent/user"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -235,6 +236,26 @@ func (_u *UserUpdate) SetNillableOnboardingCompleted(v *bool) *UserUpdate {
 	return _u
 }
 
+// SetLastLogDate sets the "last_log_date" field.
+func (_u *UserUpdate) SetLastLogDate(v time.Time) *UserUpdate {
+	_u.mutation.SetLastLogDate(v)
+	return _u
+}
+
+// SetNillableLastLogDate sets the "last_log_date" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLastLogDate(v *time.Time) *UserUpdate {
+	if v != nil {
+		_u.SetLastLogDate(*v)
+	}
+	return _u
+}
+
+// ClearLastLogDate clears the value of the "last_log_date" field.
+func (_u *UserUpdate) ClearLastLogDate() *UserUpdate {
+	_u.mutation.ClearLastLogDate()
+	return _u
+}
+
 // AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
 func (_u *UserUpdate) AddTransactionIDs(ids ...uuid.UUID) *UserUpdate {
 	_u.mutation.AddTransactionIDs(ids...)
@@ -365,6 +386,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.OnboardingCompleted(); ok {
 		_spec.SetField(user.FieldOnboardingCompleted, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.LastLogDate(); ok {
+		_spec.SetField(user.FieldLastLogDate, field.TypeTime, value)
+	}
+	if _u.mutation.LastLogDateCleared() {
+		_spec.ClearField(user.FieldLastLogDate, field.TypeTime)
 	}
 	if _u.mutation.TransactionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -637,6 +664,26 @@ func (_u *UserUpdateOne) SetNillableOnboardingCompleted(v *bool) *UserUpdateOne 
 	return _u
 }
 
+// SetLastLogDate sets the "last_log_date" field.
+func (_u *UserUpdateOne) SetLastLogDate(v time.Time) *UserUpdateOne {
+	_u.mutation.SetLastLogDate(v)
+	return _u
+}
+
+// SetNillableLastLogDate sets the "last_log_date" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLastLogDate(v *time.Time) *UserUpdateOne {
+	if v != nil {
+		_u.SetLastLogDate(*v)
+	}
+	return _u
+}
+
+// ClearLastLogDate clears the value of the "last_log_date" field.
+func (_u *UserUpdateOne) ClearLastLogDate() *UserUpdateOne {
+	_u.mutation.ClearLastLogDate()
+	return _u
+}
+
 // AddTransactionIDs adds the "transactions" edge to the Transaction entity by IDs.
 func (_u *UserUpdateOne) AddTransactionIDs(ids ...uuid.UUID) *UserUpdateOne {
 	_u.mutation.AddTransactionIDs(ids...)
@@ -797,6 +844,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.OnboardingCompleted(); ok {
 		_spec.SetField(user.FieldOnboardingCompleted, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.LastLogDate(); ok {
+		_spec.SetField(user.FieldLastLogDate, field.TypeTime, value)
+	}
+	if _u.mutation.LastLogDateCleared() {
+		_spec.ClearField(user.FieldLastLogDate, field.TypeTime)
 	}
 	if _u.mutation.TransactionsCleared() {
 		edge := &sqlgraph.EdgeSpec{

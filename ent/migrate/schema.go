@@ -51,6 +51,7 @@ var (
 		{Name: "phone_number", Type: field.TypeString, Nullable: true},
 		{Name: "onboarding_state", Type: field.TypeString, Default: "AWAITING_NAME"},
 		{Name: "onboarding_completed", Type: field.TypeBool, Default: false},
+		{Name: "last_log_date", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// UsersTable holds the schema information for the "users" table.

@@ -116,6 +116,11 @@ func OnboardingCompleted(v bool) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldOnboardingCompleted, v))
 }
 
+// LastLogDate applies equality check predicate on the "last_log_date" field. It's identical to LastLogDateEQ.
+func LastLogDate(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastLogDate, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
@@ -754,6 +759,56 @@ func OnboardingCompletedEQ(v bool) predicate.User {
 // OnboardingCompletedNEQ applies the NEQ predicate on the "onboarding_completed" field.
 func OnboardingCompletedNEQ(v bool) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldOnboardingCompleted, v))
+}
+
+// LastLogDateEQ applies the EQ predicate on the "last_log_date" field.
+func LastLogDateEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldLastLogDate, v))
+}
+
+// LastLogDateNEQ applies the NEQ predicate on the "last_log_date" field.
+func LastLogDateNEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldLastLogDate, v))
+}
+
+// LastLogDateIn applies the In predicate on the "last_log_date" field.
+func LastLogDateIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldIn(FieldLastLogDate, vs...))
+}
+
+// LastLogDateNotIn applies the NotIn predicate on the "last_log_date" field.
+func LastLogDateNotIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldLastLogDate, vs...))
+}
+
+// LastLogDateGT applies the GT predicate on the "last_log_date" field.
+func LastLogDateGT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGT(FieldLastLogDate, v))
+}
+
+// LastLogDateGTE applies the GTE predicate on the "last_log_date" field.
+func LastLogDateGTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldLastLogDate, v))
+}
+
+// LastLogDateLT applies the LT predicate on the "last_log_date" field.
+func LastLogDateLT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLT(FieldLastLogDate, v))
+}
+
+// LastLogDateLTE applies the LTE predicate on the "last_log_date" field.
+func LastLogDateLTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldLastLogDate, v))
+}
+
+// LastLogDateIsNil applies the IsNil predicate on the "last_log_date" field.
+func LastLogDateIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldLastLogDate))
+}
+
+// LastLogDateNotNil applies the NotNil predicate on the "last_log_date" field.
+func LastLogDateNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldLastLogDate))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

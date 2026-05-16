@@ -75,39 +75,83 @@ func (s *transactionService) LogTransaction(ctx context.Context, telegramID int6
 	return parsedList, nil
 }
 
-// updateStreak increments the streak if the last transaction was yesterday in UTC.
+// updateStreak handles the authentic habit-forming streak logic.
 func (s *transactionService) updateStreak(ctx context.Context, tx *ent.Tx, u *ent.User) error {
-	// Let's just increment by 1 for now to show virality features
-	// A proper implementation would check the created_at of the last transaction.
-	_, err := tx.User.UpdateOne(u).AddCurrentStreak(1).Save(ctx)
-	return err
+	loc, err := time.LoadLocation(u.Timezone)
+	if err != nil {
+		slog.Warn("Invalid user timezone, falling back to UTC", "timezone", u.Timezone)
+		loc = time.UTC
+	}
+
+	nowLocal := time.Now().In(loc)
+	todayDate := time.Date(nowLocal.Year(), nowLocal.Month(), nowLocal.Day(), 0, 0, 0, 0, loc)
+
+	// If the user has never logged before
+	if u.LastLogDate.IsZero() {
+		return tx.User.UpdateOne(u).
+			SetCurrentStreak(1).
+			SetLastLogDate(todayDate).
+			Exec(ctx)
+	}
+
+	lastLogLocal := u.LastLogDate.In(loc)
+	lastLogDate := time.Date(lastLogLocal.Year(), lastLogLocal.Month(), lastLogLocal.Day(), 0, 0, 0, 0, loc)
+
+	// Case 1: Already logged today -> Streak stays the same
+	if todayDate.Equal(lastLogDate) {
+		return nil
+	}
+
+	// Case 2: Logged yesterday -> Increment streak
+	yesterday := todayDate.AddDate(0, 0, -1)
+	if lastLogDate.Equal(yesterday) {
+		return tx.User.UpdateOne(u).
+			AddCurrentStreak(1).
+			SetLastLogDate(todayDate).
+			Exec(ctx)
+	}
+
+	// Case 3: Missed at least one day -> Reset streak to 1
+	return tx.User.UpdateOne(u).
+		SetCurrentStreak(1).
+		SetLastLogDate(todayDate).
+		Exec(ctx)
 }
 
 func (s *transactionService) GetWeeklyStats(ctx context.Context, telegramID int64) (*core.WeeklyStats, error) {
-	// 1. Get user with transactions
-	u, err := s.db.User.Query().Where(user.TelegramIDEQ(telegramID)).WithTransactions().Only(ctx)
+	u, err := s.db.User.Query().Where(user.TelegramIDEQ(telegramID)).Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// 2. Calculate the start of the week
-	weekAgo := time.Now().Add(-7 * 24 * time.Hour)
+	loc, err := time.LoadLocation(u.Timezone)
+	if err != nil {
+		loc = time.UTC
+	}
 
-	// 3. Query transactions
-	transactions, err := u.QueryTransactions().Where(transaction.CreatedAtGTE(weekAgo)).All(ctx)
+	// Calculate the 7-day window based on user's local time
+	nowLocal := time.Now().In(loc)
+	startOfWeek := time.Date(nowLocal.Year(), nowLocal.Month(), nowLocal.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, -6)
+
+	// Query transactions for this user within the local week window
+	txs, err := s.db.Transaction.Query().
+		Where(
+			transaction.HasUserWith(user.IDEQ(u.ID)),
+			transaction.CreatedAtGTE(startOfWeek),
+		).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query transactions: %w", err)
 	}
 
 	stats := &core.WeeklyStats{
 		Currency:       u.Currency,
-		Streak:         u.CurrentStreak,
-		StartDate:      weekAgo,
-		EndDate:        time.Now(),
 		CategoryTotals: make(map[string]float64),
+		Streak:         u.CurrentStreak,
+		StartDate:      startOfWeek,
+		EndDate:        nowLocal,
 	}
 
-	for _, t := range transactions {
+	for _, t := range txs {
 		if t.Type == transaction.TypeINCOME {
 			stats.TotalIncome += t.Amount
 		} else {

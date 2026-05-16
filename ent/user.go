@@ -42,6 +42,8 @@ type User struct {
 	OnboardingState string `json:"onboarding_state,omitempty"`
 	// Whether the user has completed onboarding
 	OnboardingCompleted bool `json:"onboarding_completed,omitempty"`
+	// The date of the last transaction in user's local timezone
+	LastLogDate time.Time `json:"last_log_date,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -81,7 +83,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case user.FieldUsername, user.FieldTimezone, user.FieldCurrency, user.FieldLanguage, user.FieldFullName, user.FieldPhoneNumber, user.FieldOnboardingState:
 			values[i] = new(sql.NullString)
-		case user.FieldCreatedAt:
+		case user.FieldLastLogDate, user.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
 		case user.FieldID:
 			values[i] = new(uuid.UUID)
@@ -179,6 +181,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.OnboardingCompleted = value.Bool
 			}
+		case user.FieldLastLogDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_log_date", values[i])
+			} else if value.Valid {
+				_m.LastLogDate = value.Time
+			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -263,6 +271,9 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("onboarding_completed=")
 	builder.WriteString(fmt.Sprintf("%v", _m.OnboardingCompleted))
+	builder.WriteString(", ")
+	builder.WriteString("last_log_date=")
+	builder.WriteString(_m.LastLogDate.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

@@ -55,6 +55,9 @@ func (User) Fields() []ent.Field {
 		field.Bool("onboarding_completed").
 			Default(false).
 			Comment("Whether the user has completed onboarding"),
+		field.Time("last_log_date").
+			Optional().
+			Comment("The date of the last transaction in user's local timezone"),
 		field.Time("created_at").
 			Default(func() time.Time {
 				return time.Now().UTC()

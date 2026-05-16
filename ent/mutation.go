@@ -977,6 +977,7 @@ type UserMutation struct {
 	phone_number         *string
 	onboarding_state     *string
 	onboarding_completed *bool
+	last_log_date        *time.Time
 	created_at           *time.Time
 	clearedFields        map[string]struct{}
 	transactions         map[uuid.UUID]struct{}
@@ -1615,6 +1616,55 @@ func (m *UserMutation) ResetOnboardingCompleted() {
 	m.onboarding_completed = nil
 }
 
+// SetLastLogDate sets the "last_log_date" field.
+func (m *UserMutation) SetLastLogDate(t time.Time) {
+	m.last_log_date = &t
+}
+
+// LastLogDate returns the value of the "last_log_date" field in the mutation.
+func (m *UserMutation) LastLogDate() (r time.Time, exists bool) {
+	v := m.last_log_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastLogDate returns the old "last_log_date" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLastLogDate(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastLogDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastLogDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastLogDate: %w", err)
+	}
+	return oldValue.LastLogDate, nil
+}
+
+// ClearLastLogDate clears the value of the "last_log_date" field.
+func (m *UserMutation) ClearLastLogDate() {
+	m.last_log_date = nil
+	m.clearedFields[user.FieldLastLogDate] = struct{}{}
+}
+
+// LastLogDateCleared returns if the "last_log_date" field was cleared in this mutation.
+func (m *UserMutation) LastLogDateCleared() bool {
+	_, ok := m.clearedFields[user.FieldLastLogDate]
+	return ok
+}
+
+// ResetLastLogDate resets all changes to the "last_log_date" field.
+func (m *UserMutation) ResetLastLogDate() {
+	m.last_log_date = nil
+	delete(m.clearedFields, user.FieldLastLogDate)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *UserMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -1739,7 +1789,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.telegram_id != nil {
 		fields = append(fields, user.FieldTelegramID)
 	}
@@ -1776,6 +1826,9 @@ func (m *UserMutation) Fields() []string {
 	if m.onboarding_completed != nil {
 		fields = append(fields, user.FieldOnboardingCompleted)
 	}
+	if m.last_log_date != nil {
+		fields = append(fields, user.FieldLastLogDate)
+	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -1811,6 +1864,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.OnboardingState()
 	case user.FieldOnboardingCompleted:
 		return m.OnboardingCompleted()
+	case user.FieldLastLogDate:
+		return m.LastLogDate()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -1846,6 +1901,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldOnboardingState(ctx)
 	case user.FieldOnboardingCompleted:
 		return m.OldOnboardingCompleted(ctx)
+	case user.FieldLastLogDate:
+		return m.OldLastLogDate(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -1941,6 +1998,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetOnboardingCompleted(v)
 		return nil
+	case user.FieldLastLogDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastLogDate(v)
+		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -2017,6 +2081,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldPhoneNumber) {
 		fields = append(fields, user.FieldPhoneNumber)
 	}
+	if m.FieldCleared(user.FieldLastLogDate) {
+		fields = append(fields, user.FieldLastLogDate)
+	}
 	return fields
 }
 
@@ -2042,6 +2109,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldPhoneNumber:
 		m.ClearPhoneNumber()
+		return nil
+	case user.FieldLastLogDate:
+		m.ClearLastLogDate()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -2086,6 +2156,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldOnboardingCompleted:
 		m.ResetOnboardingCompleted()
+		return nil
+	case user.FieldLastLogDate:
+		m.ResetLastLogDate()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()

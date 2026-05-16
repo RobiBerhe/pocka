@@ -182,6 +182,20 @@ func (_c *UserCreate) SetNillableOnboardingCompleted(v *bool) *UserCreate {
 	return _c
 }
 
+// SetLastLogDate sets the "last_log_date" field.
+func (_c *UserCreate) SetLastLogDate(v time.Time) *UserCreate {
+	_c.mutation.SetLastLogDate(v)
+	return _c
+}
+
+// SetNillableLastLogDate sets the "last_log_date" field if the given value is not nil.
+func (_c *UserCreate) SetNillableLastLogDate(v *time.Time) *UserCreate {
+	if v != nil {
+		_c.SetLastLogDate(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *UserCreate) SetCreatedAt(v time.Time) *UserCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -409,6 +423,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.OnboardingCompleted(); ok {
 		_spec.SetField(user.FieldOnboardingCompleted, field.TypeBool, value)
 		_node.OnboardingCompleted = value
+	}
+	if value, ok := _c.mutation.LastLogDate(); ok {
+		_spec.SetField(user.FieldLastLogDate, field.TypeTime, value)
+		_node.LastLogDate = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

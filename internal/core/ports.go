@@ -62,3 +62,9 @@ type TransactionService interface {
 type ReportService interface {
 	GenerateWeeklyCard(ctx context.Context, stats *WeeklyStats) ([]byte, error)
 }
+
+// NotificationService handles proactive user engagement.
+type NotificationService interface {
+	Start()
+	Stop()
+}

@@ -39,6 +39,8 @@ const (
 	FieldOnboardingState = "onboarding_state"
 	// FieldOnboardingCompleted holds the string denoting the onboarding_completed field in the database.
 	FieldOnboardingCompleted = "onboarding_completed"
+	// FieldLastLogDate holds the string denoting the last_log_date field in the database.
+	FieldLastLogDate = "last_log_date"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
@@ -69,6 +71,7 @@ var Columns = []string{
 	FieldPhoneNumber,
 	FieldOnboardingState,
 	FieldOnboardingCompleted,
+	FieldLastLogDate,
 	FieldCreatedAt,
 }
 
@@ -169,6 +172,11 @@ func ByOnboardingState(opts ...sql.OrderTermOption) OrderOption {
 // ByOnboardingCompleted orders the results by the onboarding_completed field.
 func ByOnboardingCompleted(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOnboardingCompleted, opts...).ToFunc()
+}
+
+// ByLastLogDate orders the results by the last_log_date field.
+func ByLastLogDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastLogDate, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
