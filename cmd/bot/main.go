@@ -66,12 +66,13 @@ func main() {
 	txnSvc := services.NewTransactionService(db.Client, finalParser)
 	reportSvc := services.NewReportService()
 	notificationSvc := services.NewNotificationService(db.Client, telegramBot)
+	i18nSvc := services.NewI18nService()
 
 	// Start Notification Service (Cron)
 	notificationSvc.Start()
 	defer notificationSvc.Stop()
 
-	botHandler := bot.NewHandler(telegramBot, db.Client, txnSvc, reportSvc)
+	botHandler := bot.NewHandler(telegramBot, db.Client, txnSvc, reportSvc, i18nSvc)
 
 	// 5. Setup Gin Router
 	if cfg.Environment == "production" {

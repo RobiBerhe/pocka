@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"pocka/ent/budget"
 	"pocka/ent/schema"
 	"pocka/ent/transaction"
 	"pocka/ent/user"
@@ -15,6 +16,20 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	budgetFields := schema.Budget{}.Fields()
+	_ = budgetFields
+	// budgetDescPeriod is the schema descriptor for period field.
+	budgetDescPeriod := budgetFields[3].Descriptor()
+	// budget.DefaultPeriod holds the default value on creation for the period field.
+	budget.DefaultPeriod = budgetDescPeriod.Default.(string)
+	// budgetDescCreatedAt is the schema descriptor for created_at field.
+	budgetDescCreatedAt := budgetFields[4].Descriptor()
+	// budget.DefaultCreatedAt holds the default value on creation for the created_at field.
+	budget.DefaultCreatedAt = budgetDescCreatedAt.Default.(func() time.Time)
+	// budgetDescID is the schema descriptor for id field.
+	budgetDescID := budgetFields[0].Descriptor()
+	// budget.DefaultID holds the default value on creation for the id field.
+	budget.DefaultID = budgetDescID.Default.(func() uuid.UUID)
 	transactionFields := schema.Transaction{}.Fields()
 	_ = transactionFields
 	// transactionDescCurrency is the schema descriptor for currency field.

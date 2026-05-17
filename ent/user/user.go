@@ -29,8 +29,8 @@ const (
 	FieldIsPremium = "is_premium"
 	// FieldCurrentStreak holds the string denoting the current_streak field in the database.
 	FieldCurrentStreak = "current_streak"
-	// FieldReferredBy holds the string denoting the referred_by field in the database.
-	FieldReferredBy = "referred_by"
+	// FieldReferrerID holds the string denoting the referrer_id field in the database.
+	FieldReferrerID = "referrer_id"
 	// FieldFullName holds the string denoting the full_name field in the database.
 	FieldFullName = "full_name"
 	// FieldPhoneNumber holds the string denoting the phone_number field in the database.
@@ -45,6 +45,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
 	EdgeTransactions = "transactions"
+	// EdgeBudgets holds the string denoting the budgets edge name in mutations.
+	EdgeBudgets = "budgets"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// TransactionsTable is the table that holds the transactions relation/edge.
@@ -54,6 +56,13 @@ const (
 	TransactionsInverseTable = "transactions"
 	// TransactionsColumn is the table column denoting the transactions relation/edge.
 	TransactionsColumn = "user_transactions"
+	// BudgetsTable is the table that holds the budgets relation/edge.
+	BudgetsTable = "budgets"
+	// BudgetsInverseTable is the table name for the Budget entity.
+	// It exists in this package in order to avoid circular dependency with the "budget" package.
+	BudgetsInverseTable = "budgets"
+	// BudgetsColumn is the table column denoting the budgets relation/edge.
+	BudgetsColumn = "user_budgets"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -66,7 +75,7 @@ var Columns = []string{
 	FieldLanguage,
 	FieldIsPremium,
 	FieldCurrentStreak,
-	FieldReferredBy,
+	FieldReferrerID,
 	FieldFullName,
 	FieldPhoneNumber,
 	FieldOnboardingState,
@@ -149,9 +158,9 @@ func ByCurrentStreak(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCurrentStreak, opts...).ToFunc()
 }
 
-// ByReferredBy orders the results by the referred_by field.
-func ByReferredBy(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldReferredBy, opts...).ToFunc()
+// ByReferrerID orders the results by the referrer_id field.
+func ByReferrerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReferrerID, opts...).ToFunc()
 }
 
 // ByFullName orders the results by the full_name field.
@@ -197,10 +206,31 @@ func ByTransactions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTransactionsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByBudgetsCount orders the results by budgets count.
+func ByBudgetsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBudgetsStep(), opts...)
+	}
+}
+
+// ByBudgets orders the results by budgets terms.
+func ByBudgets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBudgetsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTransactionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TransactionsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
+	)
+}
+func newBudgetsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BudgetsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
 	)
 }

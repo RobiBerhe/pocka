@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"pocka/ent/budget"
 	"pocka/ent/predicate"
 	"pocka/ent/transaction"
 	"pocka/ent/user"
@@ -26,9 +27,629 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeBudget      = "Budget"
 	TypeTransaction = "Transaction"
 	TypeUser        = "User"
 )
+
+// BudgetMutation represents an operation that mutates the Budget nodes in the graph.
+type BudgetMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	amount        *float64
+	addamount     *float64
+	category      *string
+	period        *string
+	created_at    *time.Time
+	clearedFields map[string]struct{}
+	user          *uuid.UUID
+	cleareduser   bool
+	done          bool
+	oldValue      func(context.Context) (*Budget, error)
+	predicates    []predicate.Budget
+}
+
+var _ ent.Mutation = (*BudgetMutation)(nil)
+
+// budgetOption allows management of the mutation configuration using functional options.
+type budgetOption func(*BudgetMutation)
+
+// newBudgetMutation creates new mutation for the Budget entity.
+func newBudgetMutation(c config, op Op, opts ...budgetOption) *BudgetMutation {
+	m := &BudgetMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeBudget,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withBudgetID sets the ID field of the mutation.
+func withBudgetID(id uuid.UUID) budgetOption {
+	return func(m *BudgetMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Budget
+		)
+		m.oldValue = func(ctx context.Context) (*Budget, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Budget.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withBudget sets the old Budget of the mutation.
+func withBudget(node *Budget) budgetOption {
+	return func(m *BudgetMutation) {
+		m.oldValue = func(context.Context) (*Budget, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m BudgetMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m BudgetMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Budget entities.
+func (m *BudgetMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *BudgetMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *BudgetMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Budget.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetAmount sets the "amount" field.
+func (m *BudgetMutation) SetAmount(f float64) {
+	m.amount = &f
+	m.addamount = nil
+}
+
+// Amount returns the value of the "amount" field in the mutation.
+func (m *BudgetMutation) Amount() (r float64, exists bool) {
+	v := m.amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmount returns the old "amount" field's value of the Budget entity.
+// If the Budget object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BudgetMutation) OldAmount(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmount: %w", err)
+	}
+	return oldValue.Amount, nil
+}
+
+// AddAmount adds f to the "amount" field.
+func (m *BudgetMutation) AddAmount(f float64) {
+	if m.addamount != nil {
+		*m.addamount += f
+	} else {
+		m.addamount = &f
+	}
+}
+
+// AddedAmount returns the value that was added to the "amount" field in this mutation.
+func (m *BudgetMutation) AddedAmount() (r float64, exists bool) {
+	v := m.addamount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmount resets all changes to the "amount" field.
+func (m *BudgetMutation) ResetAmount() {
+	m.amount = nil
+	m.addamount = nil
+}
+
+// SetCategory sets the "category" field.
+func (m *BudgetMutation) SetCategory(s string) {
+	m.category = &s
+}
+
+// Category returns the value of the "category" field in the mutation.
+func (m *BudgetMutation) Category() (r string, exists bool) {
+	v := m.category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCategory returns the old "category" field's value of the Budget entity.
+// If the Budget object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BudgetMutation) OldCategory(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCategory: %w", err)
+	}
+	return oldValue.Category, nil
+}
+
+// ClearCategory clears the value of the "category" field.
+func (m *BudgetMutation) ClearCategory() {
+	m.category = nil
+	m.clearedFields[budget.FieldCategory] = struct{}{}
+}
+
+// CategoryCleared returns if the "category" field was cleared in this mutation.
+func (m *BudgetMutation) CategoryCleared() bool {
+	_, ok := m.clearedFields[budget.FieldCategory]
+	return ok
+}
+
+// ResetCategory resets all changes to the "category" field.
+func (m *BudgetMutation) ResetCategory() {
+	m.category = nil
+	delete(m.clearedFields, budget.FieldCategory)
+}
+
+// SetPeriod sets the "period" field.
+func (m *BudgetMutation) SetPeriod(s string) {
+	m.period = &s
+}
+
+// Period returns the value of the "period" field in the mutation.
+func (m *BudgetMutation) Period() (r string, exists bool) {
+	v := m.period
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPeriod returns the old "period" field's value of the Budget entity.
+// If the Budget object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BudgetMutation) OldPeriod(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPeriod is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPeriod requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPeriod: %w", err)
+	}
+	return oldValue.Period, nil
+}
+
+// ResetPeriod resets all changes to the "period" field.
+func (m *BudgetMutation) ResetPeriod() {
+	m.period = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *BudgetMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *BudgetMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Budget entity.
+// If the Budget object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BudgetMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *BudgetMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *BudgetMutation) SetUserID(id uuid.UUID) {
+	m.user = &id
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *BudgetMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *BudgetMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserID returns the "user" edge ID in the mutation.
+func (m *BudgetMutation) UserID() (id uuid.UUID, exists bool) {
+	if m.user != nil {
+		return *m.user, true
+	}
+	return
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *BudgetMutation) UserIDs() (ids []uuid.UUID) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *BudgetMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// Where appends a list predicates to the BudgetMutation builder.
+func (m *BudgetMutation) Where(ps ...predicate.Budget) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the BudgetMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *BudgetMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Budget, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *BudgetMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *BudgetMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Budget).
+func (m *BudgetMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *BudgetMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.amount != nil {
+		fields = append(fields, budget.FieldAmount)
+	}
+	if m.category != nil {
+		fields = append(fields, budget.FieldCategory)
+	}
+	if m.period != nil {
+		fields = append(fields, budget.FieldPeriod)
+	}
+	if m.created_at != nil {
+		fields = append(fields, budget.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *BudgetMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case budget.FieldAmount:
+		return m.Amount()
+	case budget.FieldCategory:
+		return m.Category()
+	case budget.FieldPeriod:
+		return m.Period()
+	case budget.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *BudgetMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case budget.FieldAmount:
+		return m.OldAmount(ctx)
+	case budget.FieldCategory:
+		return m.OldCategory(ctx)
+	case budget.FieldPeriod:
+		return m.OldPeriod(ctx)
+	case budget.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Budget field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BudgetMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case budget.FieldAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmount(v)
+		return nil
+	case budget.FieldCategory:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCategory(v)
+		return nil
+	case budget.FieldPeriod:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPeriod(v)
+		return nil
+	case budget.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Budget field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *BudgetMutation) AddedFields() []string {
+	var fields []string
+	if m.addamount != nil {
+		fields = append(fields, budget.FieldAmount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *BudgetMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case budget.FieldAmount:
+		return m.AddedAmount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BudgetMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case budget.FieldAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Budget numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *BudgetMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(budget.FieldCategory) {
+		fields = append(fields, budget.FieldCategory)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *BudgetMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *BudgetMutation) ClearField(name string) error {
+	switch name {
+	case budget.FieldCategory:
+		m.ClearCategory()
+		return nil
+	}
+	return fmt.Errorf("unknown Budget nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *BudgetMutation) ResetField(name string) error {
+	switch name {
+	case budget.FieldAmount:
+		m.ResetAmount()
+		return nil
+	case budget.FieldCategory:
+		m.ResetCategory()
+		return nil
+	case budget.FieldPeriod:
+		m.ResetPeriod()
+		return nil
+	case budget.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Budget field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *BudgetMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.user != nil {
+		edges = append(edges, budget.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *BudgetMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case budget.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *BudgetMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *BudgetMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *BudgetMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleareduser {
+		edges = append(edges, budget.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *BudgetMutation) EdgeCleared(name string) bool {
+	switch name {
+	case budget.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *BudgetMutation) ClearEdge(name string) error {
+	switch name {
+	case budget.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown Budget unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *BudgetMutation) ResetEdge(name string) error {
+	switch name {
+	case budget.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown Budget edge %s", name)
+}
 
 // TransactionMutation represents an operation that mutates the Transaction nodes in the graph.
 type TransactionMutation struct {
@@ -972,7 +1593,8 @@ type UserMutation struct {
 	is_premium           *bool
 	current_streak       *int
 	addcurrent_streak    *int
-	referred_by          *uuid.UUID
+	referrer_id          *int64
+	addreferrer_id       *int64
 	full_name            *string
 	phone_number         *string
 	onboarding_state     *string
@@ -983,6 +1605,9 @@ type UserMutation struct {
 	transactions         map[uuid.UUID]struct{}
 	removedtransactions  map[uuid.UUID]struct{}
 	clearedtransactions  bool
+	budgets              map[uuid.UUID]struct{}
+	removedbudgets       map[uuid.UUID]struct{}
+	clearedbudgets       bool
 	done                 bool
 	oldValue             func(context.Context) (*User, error)
 	predicates           []predicate.User
@@ -1397,53 +2022,74 @@ func (m *UserMutation) ResetCurrentStreak() {
 	m.addcurrent_streak = nil
 }
 
-// SetReferredBy sets the "referred_by" field.
-func (m *UserMutation) SetReferredBy(u uuid.UUID) {
-	m.referred_by = &u
+// SetReferrerID sets the "referrer_id" field.
+func (m *UserMutation) SetReferrerID(i int64) {
+	m.referrer_id = &i
+	m.addreferrer_id = nil
 }
 
-// ReferredBy returns the value of the "referred_by" field in the mutation.
-func (m *UserMutation) ReferredBy() (r uuid.UUID, exists bool) {
-	v := m.referred_by
+// ReferrerID returns the value of the "referrer_id" field in the mutation.
+func (m *UserMutation) ReferrerID() (r int64, exists bool) {
+	v := m.referrer_id
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldReferredBy returns the old "referred_by" field's value of the User entity.
+// OldReferrerID returns the old "referrer_id" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldReferredBy(ctx context.Context) (v *uuid.UUID, err error) {
+func (m *UserMutation) OldReferrerID(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldReferredBy is only allowed on UpdateOne operations")
+		return v, errors.New("OldReferrerID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldReferredBy requires an ID field in the mutation")
+		return v, errors.New("OldReferrerID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldReferredBy: %w", err)
+		return v, fmt.Errorf("querying old value for OldReferrerID: %w", err)
 	}
-	return oldValue.ReferredBy, nil
+	return oldValue.ReferrerID, nil
 }
 
-// ClearReferredBy clears the value of the "referred_by" field.
-func (m *UserMutation) ClearReferredBy() {
-	m.referred_by = nil
-	m.clearedFields[user.FieldReferredBy] = struct{}{}
+// AddReferrerID adds i to the "referrer_id" field.
+func (m *UserMutation) AddReferrerID(i int64) {
+	if m.addreferrer_id != nil {
+		*m.addreferrer_id += i
+	} else {
+		m.addreferrer_id = &i
+	}
 }
 
-// ReferredByCleared returns if the "referred_by" field was cleared in this mutation.
-func (m *UserMutation) ReferredByCleared() bool {
-	_, ok := m.clearedFields[user.FieldReferredBy]
+// AddedReferrerID returns the value that was added to the "referrer_id" field in this mutation.
+func (m *UserMutation) AddedReferrerID() (r int64, exists bool) {
+	v := m.addreferrer_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearReferrerID clears the value of the "referrer_id" field.
+func (m *UserMutation) ClearReferrerID() {
+	m.referrer_id = nil
+	m.addreferrer_id = nil
+	m.clearedFields[user.FieldReferrerID] = struct{}{}
+}
+
+// ReferrerIDCleared returns if the "referrer_id" field was cleared in this mutation.
+func (m *UserMutation) ReferrerIDCleared() bool {
+	_, ok := m.clearedFields[user.FieldReferrerID]
 	return ok
 }
 
-// ResetReferredBy resets all changes to the "referred_by" field.
-func (m *UserMutation) ResetReferredBy() {
-	m.referred_by = nil
-	delete(m.clearedFields, user.FieldReferredBy)
+// ResetReferrerID resets all changes to the "referrer_id" field.
+func (m *UserMutation) ResetReferrerID() {
+	m.referrer_id = nil
+	m.addreferrer_id = nil
+	delete(m.clearedFields, user.FieldReferrerID)
 }
 
 // SetFullName sets the "full_name" field.
@@ -1755,6 +2401,60 @@ func (m *UserMutation) ResetTransactions() {
 	m.removedtransactions = nil
 }
 
+// AddBudgetIDs adds the "budgets" edge to the Budget entity by ids.
+func (m *UserMutation) AddBudgetIDs(ids ...uuid.UUID) {
+	if m.budgets == nil {
+		m.budgets = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.budgets[ids[i]] = struct{}{}
+	}
+}
+
+// ClearBudgets clears the "budgets" edge to the Budget entity.
+func (m *UserMutation) ClearBudgets() {
+	m.clearedbudgets = true
+}
+
+// BudgetsCleared reports if the "budgets" edge to the Budget entity was cleared.
+func (m *UserMutation) BudgetsCleared() bool {
+	return m.clearedbudgets
+}
+
+// RemoveBudgetIDs removes the "budgets" edge to the Budget entity by IDs.
+func (m *UserMutation) RemoveBudgetIDs(ids ...uuid.UUID) {
+	if m.removedbudgets == nil {
+		m.removedbudgets = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.budgets, ids[i])
+		m.removedbudgets[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedBudgets returns the removed IDs of the "budgets" edge to the Budget entity.
+func (m *UserMutation) RemovedBudgetsIDs() (ids []uuid.UUID) {
+	for id := range m.removedbudgets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// BudgetsIDs returns the "budgets" edge IDs in the mutation.
+func (m *UserMutation) BudgetsIDs() (ids []uuid.UUID) {
+	for id := range m.budgets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetBudgets resets all changes to the "budgets" edge.
+func (m *UserMutation) ResetBudgets() {
+	m.budgets = nil
+	m.clearedbudgets = false
+	m.removedbudgets = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -1811,8 +2511,8 @@ func (m *UserMutation) Fields() []string {
 	if m.current_streak != nil {
 		fields = append(fields, user.FieldCurrentStreak)
 	}
-	if m.referred_by != nil {
-		fields = append(fields, user.FieldReferredBy)
+	if m.referrer_id != nil {
+		fields = append(fields, user.FieldReferrerID)
 	}
 	if m.full_name != nil {
 		fields = append(fields, user.FieldFullName)
@@ -1854,8 +2554,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.IsPremium()
 	case user.FieldCurrentStreak:
 		return m.CurrentStreak()
-	case user.FieldReferredBy:
-		return m.ReferredBy()
+	case user.FieldReferrerID:
+		return m.ReferrerID()
 	case user.FieldFullName:
 		return m.FullName()
 	case user.FieldPhoneNumber:
@@ -1891,8 +2591,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldIsPremium(ctx)
 	case user.FieldCurrentStreak:
 		return m.OldCurrentStreak(ctx)
-	case user.FieldReferredBy:
-		return m.OldReferredBy(ctx)
+	case user.FieldReferrerID:
+		return m.OldReferrerID(ctx)
 	case user.FieldFullName:
 		return m.OldFullName(ctx)
 	case user.FieldPhoneNumber:
@@ -1963,12 +2663,12 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCurrentStreak(v)
 		return nil
-	case user.FieldReferredBy:
-		v, ok := value.(uuid.UUID)
+	case user.FieldReferrerID:
+		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetReferredBy(v)
+		m.SetReferrerID(v)
 		return nil
 	case user.FieldFullName:
 		v, ok := value.(string)
@@ -2026,6 +2726,9 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addcurrent_streak != nil {
 		fields = append(fields, user.FieldCurrentStreak)
 	}
+	if m.addreferrer_id != nil {
+		fields = append(fields, user.FieldReferrerID)
+	}
 	return fields
 }
 
@@ -2038,6 +2741,8 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedTelegramID()
 	case user.FieldCurrentStreak:
 		return m.AddedCurrentStreak()
+	case user.FieldReferrerID:
+		return m.AddedReferrerID()
 	}
 	return nil, false
 }
@@ -2061,6 +2766,13 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddCurrentStreak(v)
 		return nil
+	case user.FieldReferrerID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReferrerID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -2072,8 +2784,8 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldUsername) {
 		fields = append(fields, user.FieldUsername)
 	}
-	if m.FieldCleared(user.FieldReferredBy) {
-		fields = append(fields, user.FieldReferredBy)
+	if m.FieldCleared(user.FieldReferrerID) {
+		fields = append(fields, user.FieldReferrerID)
 	}
 	if m.FieldCleared(user.FieldFullName) {
 		fields = append(fields, user.FieldFullName)
@@ -2101,8 +2813,8 @@ func (m *UserMutation) ClearField(name string) error {
 	case user.FieldUsername:
 		m.ClearUsername()
 		return nil
-	case user.FieldReferredBy:
-		m.ClearReferredBy()
+	case user.FieldReferrerID:
+		m.ClearReferrerID()
 		return nil
 	case user.FieldFullName:
 		m.ClearFullName()
@@ -2142,8 +2854,8 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldCurrentStreak:
 		m.ResetCurrentStreak()
 		return nil
-	case user.FieldReferredBy:
-		m.ResetReferredBy()
+	case user.FieldReferrerID:
+		m.ResetReferrerID()
 		return nil
 	case user.FieldFullName:
 		m.ResetFullName()
@@ -2169,9 +2881,12 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.transactions != nil {
 		edges = append(edges, user.EdgeTransactions)
+	}
+	if m.budgets != nil {
+		edges = append(edges, user.EdgeBudgets)
 	}
 	return edges
 }
@@ -2186,15 +2901,24 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeBudgets:
+		ids := make([]ent.Value, 0, len(m.budgets))
+		for id := range m.budgets {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedtransactions != nil {
 		edges = append(edges, user.EdgeTransactions)
+	}
+	if m.removedbudgets != nil {
+		edges = append(edges, user.EdgeBudgets)
 	}
 	return edges
 }
@@ -2209,15 +2933,24 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeBudgets:
+		ids := make([]ent.Value, 0, len(m.removedbudgets))
+		for id := range m.removedbudgets {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedtransactions {
 		edges = append(edges, user.EdgeTransactions)
+	}
+	if m.clearedbudgets {
+		edges = append(edges, user.EdgeBudgets)
 	}
 	return edges
 }
@@ -2228,6 +2961,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 	switch name {
 	case user.EdgeTransactions:
 		return m.clearedtransactions
+	case user.EdgeBudgets:
+		return m.clearedbudgets
 	}
 	return false
 }
@@ -2246,6 +2981,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 	switch name {
 	case user.EdgeTransactions:
 		m.ResetTransactions()
+		return nil
+	case user.EdgeBudgets:
+		m.ResetBudgets()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

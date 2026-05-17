@@ -36,7 +36,7 @@ type ParsedTransaction struct {
 	Metadata map[string]interface{}
 }
 
-type WeeklyStats struct {
+type SummaryStats struct {
 	TotalIncome    float64
 	TotalExpense   float64
 	NetBalance     float64
@@ -54,17 +54,25 @@ type TransactionParser interface {
 
 // TransactionService handles the core business logic around transactions.
 type TransactionService interface {
-	LogTransaction(ctx context.Context, userID int64, text string, userCurrency string) ([]*ParsedTransaction, error)
-	GetWeeklyStats(ctx context.Context, userID int64) (*WeeklyStats, error)
+	LogTransaction(ctx context.Context, userID int64, text string, userCurrency string) ([]*ParsedTransaction, []string, error)
+	GetWeeklyStats(ctx context.Context, userID int64) (*SummaryStats, error)
+	GetMonthlyStats(ctx context.Context, userID int64) (*SummaryStats, error)
+	GetCustomStats(ctx context.Context, userID int64, start, end time.Time) (*SummaryStats, error)
+	ExportDataCSV(ctx context.Context, userID int64) ([]byte, error)
 }
 
 // ReportService generates visual reports and summary cards.
 type ReportService interface {
-	GenerateWeeklyCard(ctx context.Context, stats *WeeklyStats) ([]byte, error)
+	GenerateSummaryCard(ctx context.Context, title string, stats *SummaryStats) ([]byte, error)
 }
 
 // NotificationService handles proactive user engagement.
 type NotificationService interface {
 	Start()
 	Stop()
+}
+
+// I18nService handles multi-language translations.
+type I18nService interface {
+	Translate(langCode, key string, args ...interface{}) string
 }

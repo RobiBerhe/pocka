@@ -32,8 +32,8 @@ type User struct {
 	IsPremium bool `json:"is_premium,omitempty"`
 	// CurrentStreak holds the value of the "current_streak" field.
 	CurrentStreak int `json:"current_streak,omitempty"`
-	// The ID of the user who referred this user
-	ReferredBy *uuid.UUID `json:"referred_by,omitempty"`
+	// The Telegram ID of the user who referred this user
+	ReferrerID int64 `json:"referrer_id,omitempty"`
 	// User's preferred full name
 	FullName string `json:"full_name,omitempty"`
 	// User's phone number
@@ -56,9 +56,11 @@ type User struct {
 type UserEdges struct {
 	// Transactions holds the value of the transactions edge.
 	Transactions []*Transaction `json:"transactions,omitempty"`
+	// Budgets holds the value of the budgets edge.
+	Budgets []*Budget `json:"budgets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // TransactionsOrErr returns the Transactions value or an error if the edge
@@ -70,16 +72,23 @@ func (e UserEdges) TransactionsOrErr() ([]*Transaction, error) {
 	return nil, &NotLoadedError{edge: "transactions"}
 }
 
+// BudgetsOrErr returns the Budgets value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) BudgetsOrErr() ([]*Budget, error) {
+	if e.loadedTypes[1] {
+		return e.Budgets, nil
+	}
+	return nil, &NotLoadedError{edge: "budgets"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldReferredBy:
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case user.FieldIsPremium, user.FieldOnboardingCompleted:
 			values[i] = new(sql.NullBool)
-		case user.FieldTelegramID, user.FieldCurrentStreak:
+		case user.FieldTelegramID, user.FieldCurrentStreak, user.FieldReferrerID:
 			values[i] = new(sql.NullInt64)
 		case user.FieldUsername, user.FieldTimezone, user.FieldCurrency, user.FieldLanguage, user.FieldFullName, user.FieldPhoneNumber, user.FieldOnboardingState:
 			values[i] = new(sql.NullString)
@@ -150,12 +159,11 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CurrentStreak = int(value.Int64)
 			}
-		case user.FieldReferredBy:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field referred_by", values[i])
+		case user.FieldReferrerID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field referrer_id", values[i])
 			} else if value.Valid {
-				_m.ReferredBy = new(uuid.UUID)
-				*_m.ReferredBy = *value.S.(*uuid.UUID)
+				_m.ReferrerID = value.Int64
 			}
 		case user.FieldFullName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -211,6 +219,11 @@ func (_m *User) QueryTransactions() *TransactionQuery {
 	return NewUserClient(_m.config).QueryTransactions(_m)
 }
 
+// QueryBudgets queries the "budgets" edge of the User entity.
+func (_m *User) QueryBudgets() *BudgetQuery {
+	return NewUserClient(_m.config).QueryBudgets(_m)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -255,10 +268,8 @@ func (_m *User) String() string {
 	builder.WriteString("current_streak=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CurrentStreak))
 	builder.WriteString(", ")
-	if v := _m.ReferredBy; v != nil {
-		builder.WriteString("referred_by=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("referrer_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ReferrerID))
 	builder.WriteString(", ")
 	builder.WriteString("full_name=")
 	builder.WriteString(_m.FullName)

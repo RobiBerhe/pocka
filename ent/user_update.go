@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"pocka/ent/budget"
 	"pocka/ent/predicate"
 	"pocka/ent/transaction"
 	"pocka/ent/user"
@@ -148,23 +149,30 @@ func (_u *UserUpdate) AddCurrentStreak(v int) *UserUpdate {
 	return _u
 }
 
-// SetReferredBy sets the "referred_by" field.
-func (_u *UserUpdate) SetReferredBy(v uuid.UUID) *UserUpdate {
-	_u.mutation.SetReferredBy(v)
+// SetReferrerID sets the "referrer_id" field.
+func (_u *UserUpdate) SetReferrerID(v int64) *UserUpdate {
+	_u.mutation.ResetReferrerID()
+	_u.mutation.SetReferrerID(v)
 	return _u
 }
 
-// SetNillableReferredBy sets the "referred_by" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableReferredBy(v *uuid.UUID) *UserUpdate {
+// SetNillableReferrerID sets the "referrer_id" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableReferrerID(v *int64) *UserUpdate {
 	if v != nil {
-		_u.SetReferredBy(*v)
+		_u.SetReferrerID(*v)
 	}
 	return _u
 }
 
-// ClearReferredBy clears the value of the "referred_by" field.
-func (_u *UserUpdate) ClearReferredBy() *UserUpdate {
-	_u.mutation.ClearReferredBy()
+// AddReferrerID adds value to the "referrer_id" field.
+func (_u *UserUpdate) AddReferrerID(v int64) *UserUpdate {
+	_u.mutation.AddReferrerID(v)
+	return _u
+}
+
+// ClearReferrerID clears the value of the "referrer_id" field.
+func (_u *UserUpdate) ClearReferrerID() *UserUpdate {
+	_u.mutation.ClearReferrerID()
 	return _u
 }
 
@@ -271,6 +279,21 @@ func (_u *UserUpdate) AddTransactions(v ...*Transaction) *UserUpdate {
 	return _u.AddTransactionIDs(ids...)
 }
 
+// AddBudgetIDs adds the "budgets" edge to the Budget entity by IDs.
+func (_u *UserUpdate) AddBudgetIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddBudgetIDs(ids...)
+	return _u
+}
+
+// AddBudgets adds the "budgets" edges to the Budget entity.
+func (_u *UserUpdate) AddBudgets(v ...*Budget) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBudgetIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -295,6 +318,27 @@ func (_u *UserUpdate) RemoveTransactions(v ...*Transaction) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTransactionIDs(ids...)
+}
+
+// ClearBudgets clears all "budgets" edges to the Budget entity.
+func (_u *UserUpdate) ClearBudgets() *UserUpdate {
+	_u.mutation.ClearBudgets()
+	return _u
+}
+
+// RemoveBudgetIDs removes the "budgets" edge to Budget entities by IDs.
+func (_u *UserUpdate) RemoveBudgetIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveBudgetIDs(ids...)
+	return _u
+}
+
+// RemoveBudgets removes "budgets" edges to Budget entities.
+func (_u *UserUpdate) RemoveBudgets(v ...*Budget) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBudgetIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -363,11 +407,14 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedCurrentStreak(); ok {
 		_spec.AddField(user.FieldCurrentStreak, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.ReferredBy(); ok {
-		_spec.SetField(user.FieldReferredBy, field.TypeUUID, value)
+	if value, ok := _u.mutation.ReferrerID(); ok {
+		_spec.SetField(user.FieldReferrerID, field.TypeInt64, value)
 	}
-	if _u.mutation.ReferredByCleared() {
-		_spec.ClearField(user.FieldReferredBy, field.TypeUUID)
+	if value, ok := _u.mutation.AddedReferrerID(); ok {
+		_spec.AddField(user.FieldReferrerID, field.TypeInt64, value)
+	}
+	if _u.mutation.ReferrerIDCleared() {
+		_spec.ClearField(user.FieldReferrerID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.FullName(); ok {
 		_spec.SetField(user.FieldFullName, field.TypeString, value)
@@ -431,6 +478,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BudgetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BudgetsTable,
+			Columns: []string{user.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBudgetsIDs(); len(nodes) > 0 && !_u.mutation.BudgetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BudgetsTable,
+			Columns: []string{user.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BudgetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BudgetsTable,
+			Columns: []string{user.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -576,23 +668,30 @@ func (_u *UserUpdateOne) AddCurrentStreak(v int) *UserUpdateOne {
 	return _u
 }
 
-// SetReferredBy sets the "referred_by" field.
-func (_u *UserUpdateOne) SetReferredBy(v uuid.UUID) *UserUpdateOne {
-	_u.mutation.SetReferredBy(v)
+// SetReferrerID sets the "referrer_id" field.
+func (_u *UserUpdateOne) SetReferrerID(v int64) *UserUpdateOne {
+	_u.mutation.ResetReferrerID()
+	_u.mutation.SetReferrerID(v)
 	return _u
 }
 
-// SetNillableReferredBy sets the "referred_by" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableReferredBy(v *uuid.UUID) *UserUpdateOne {
+// SetNillableReferrerID sets the "referrer_id" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableReferrerID(v *int64) *UserUpdateOne {
 	if v != nil {
-		_u.SetReferredBy(*v)
+		_u.SetReferrerID(*v)
 	}
 	return _u
 }
 
-// ClearReferredBy clears the value of the "referred_by" field.
-func (_u *UserUpdateOne) ClearReferredBy() *UserUpdateOne {
-	_u.mutation.ClearReferredBy()
+// AddReferrerID adds value to the "referrer_id" field.
+func (_u *UserUpdateOne) AddReferrerID(v int64) *UserUpdateOne {
+	_u.mutation.AddReferrerID(v)
+	return _u
+}
+
+// ClearReferrerID clears the value of the "referrer_id" field.
+func (_u *UserUpdateOne) ClearReferrerID() *UserUpdateOne {
+	_u.mutation.ClearReferrerID()
 	return _u
 }
 
@@ -699,6 +798,21 @@ func (_u *UserUpdateOne) AddTransactions(v ...*Transaction) *UserUpdateOne {
 	return _u.AddTransactionIDs(ids...)
 }
 
+// AddBudgetIDs adds the "budgets" edge to the Budget entity by IDs.
+func (_u *UserUpdateOne) AddBudgetIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddBudgetIDs(ids...)
+	return _u
+}
+
+// AddBudgets adds the "budgets" edges to the Budget entity.
+func (_u *UserUpdateOne) AddBudgets(v ...*Budget) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBudgetIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -723,6 +837,27 @@ func (_u *UserUpdateOne) RemoveTransactions(v ...*Transaction) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTransactionIDs(ids...)
+}
+
+// ClearBudgets clears all "budgets" edges to the Budget entity.
+func (_u *UserUpdateOne) ClearBudgets() *UserUpdateOne {
+	_u.mutation.ClearBudgets()
+	return _u
+}
+
+// RemoveBudgetIDs removes the "budgets" edge to Budget entities by IDs.
+func (_u *UserUpdateOne) RemoveBudgetIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveBudgetIDs(ids...)
+	return _u
+}
+
+// RemoveBudgets removes "budgets" edges to Budget entities.
+func (_u *UserUpdateOne) RemoveBudgets(v ...*Budget) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBudgetIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -821,11 +956,14 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if value, ok := _u.mutation.AddedCurrentStreak(); ok {
 		_spec.AddField(user.FieldCurrentStreak, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.ReferredBy(); ok {
-		_spec.SetField(user.FieldReferredBy, field.TypeUUID, value)
+	if value, ok := _u.mutation.ReferrerID(); ok {
+		_spec.SetField(user.FieldReferrerID, field.TypeInt64, value)
 	}
-	if _u.mutation.ReferredByCleared() {
-		_spec.ClearField(user.FieldReferredBy, field.TypeUUID)
+	if value, ok := _u.mutation.AddedReferrerID(); ok {
+		_spec.AddField(user.FieldReferrerID, field.TypeInt64, value)
+	}
+	if _u.mutation.ReferrerIDCleared() {
+		_spec.ClearField(user.FieldReferrerID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.FullName(); ok {
 		_spec.SetField(user.FieldFullName, field.TypeString, value)
@@ -889,6 +1027,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BudgetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BudgetsTable,
+			Columns: []string{user.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBudgetsIDs(); len(nodes) > 0 && !_u.mutation.BudgetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BudgetsTable,
+			Columns: []string{user.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BudgetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BudgetsTable,
+			Columns: []string{user.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

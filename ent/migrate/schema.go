@@ -8,6 +8,29 @@ import (
 )
 
 var (
+	// BudgetsColumns holds the columns for the "budgets" table.
+	BudgetsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "amount", Type: field.TypeFloat64},
+		{Name: "category", Type: field.TypeString, Nullable: true},
+		{Name: "period", Type: field.TypeString, Default: "monthly"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "user_budgets", Type: field.TypeUUID},
+	}
+	// BudgetsTable holds the schema information for the "budgets" table.
+	BudgetsTable = &schema.Table{
+		Name:       "budgets",
+		Columns:    BudgetsColumns,
+		PrimaryKey: []*schema.Column{BudgetsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "budgets_users_budgets",
+				Columns:    []*schema.Column{BudgetsColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// TransactionsColumns holds the columns for the "transactions" table.
 	TransactionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -46,7 +69,7 @@ var (
 		{Name: "language", Type: field.TypeString, Default: "en"},
 		{Name: "is_premium", Type: field.TypeBool, Default: false},
 		{Name: "current_streak", Type: field.TypeInt, Default: 0},
-		{Name: "referred_by", Type: field.TypeUUID, Nullable: true},
+		{Name: "referrer_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "full_name", Type: field.TypeString, Nullable: true},
 		{Name: "phone_number", Type: field.TypeString, Nullable: true},
 		{Name: "onboarding_state", Type: field.TypeString, Default: "AWAITING_NAME"},
@@ -62,11 +85,13 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		BudgetsTable,
 		TransactionsTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	BudgetsTable.ForeignKeys[0].RefTable = UsersTable
 	TransactionsTable.ForeignKeys[0].RefTable = UsersTable
 }

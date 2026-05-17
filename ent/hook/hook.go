@@ -8,6 +8,18 @@ import (
 	"pocka/ent"
 )
 
+// The BudgetFunc type is an adapter to allow the use of ordinary
+// function as Budget mutator.
+type BudgetFunc func(context.Context, *ent.BudgetMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BudgetFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BudgetMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BudgetMutation", m)
+}
+
 // The TransactionFunc type is an adapter to allow the use of ordinary
 // function as Transaction mutator.
 type TransactionFunc func(context.Context, *ent.TransactionMutation) (ent.Value, error)

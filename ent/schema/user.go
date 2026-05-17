@@ -39,10 +39,9 @@ func (User) Fields() []ent.Field {
 			Default(false),
 		field.Int("current_streak").
 			Default(0),
-		field.UUID("referred_by", uuid.UUID{}).
+		field.Int64("referrer_id").
 			Optional().
-			Nillable().
-			Comment("The ID of the user who referred this user"),
+			Comment("The Telegram ID of the user who referred this user"),
 		field.String("full_name").
 			Optional().
 			Comment("User's preferred full name"),
@@ -70,5 +69,6 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("transactions", Transaction.Type),
+		edge.To("budgets", Budget.Type),
 	}
 }

@@ -19,7 +19,7 @@ func NewReportService() core.ReportService {
 	return &reportService{}
 }
 
-func (s *reportService) GenerateWeeklyCard(ctx context.Context, stats *core.WeeklyStats) ([]byte, error) {
+func (s *reportService) GenerateSummaryCard(ctx context.Context, title string, stats *core.SummaryStats) ([]byte, error) {
 	const (
 		W = 1200
 		H = 900
@@ -73,7 +73,7 @@ func (s *reportService) GenerateWeeklyCard(ctx context.Context, stats *core.Week
 	if err := dc.LoadFontFace(fontPath, 54); err != nil {
 		slog.Error("Failed to load font", "path", fontPath, "error", err)
 	}
-	dc.DrawString("Pocka Weekly Wrap", 100, 150)
+	dc.DrawString(title, 100, 150)
 
 	dc.SetRGBA(1, 1, 1, 0.6)
 	dc.LoadFontFace(fontPath, 28)

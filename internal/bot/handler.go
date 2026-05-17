@@ -7,12 +7,15 @@ import (
 	"log/slog"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"pocka/ent"
+	"pocka/ent/budget"
+	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"pocka/internal/core"
 )
@@ -22,14 +25,16 @@ type Handler struct {
 	db        *ent.Client
 	txnSvc    core.TransactionService
 	reportSvc core.ReportService
+	i18n      core.I18nService
 }
 
-func NewHandler(bot *tgbotapi.BotAPI, db *ent.Client, txnSvc core.TransactionService, reportSvc core.ReportService) *Handler {
+func NewHandler(bot *tgbotapi.BotAPI, db *ent.Client, txnSvc core.TransactionService, reportSvc core.ReportService, i18n core.I18nService) *Handler {
 	return &Handler{
 		bot:       bot,
 		db:        db,
 		txnSvc:    txnSvc,
 		reportSvc: reportSvc,
+		i18n:      i18n,
 	}
 }
 
@@ -124,6 +129,16 @@ func (h *Handler) handleCommand(ctx context.Context, message *tgbotapi.Message, 
 	case "start":
 		if strings.HasPrefix(args, "ref_") {
 			slog.Info("User used referral code", "user_id", u.TelegramID, "ref_code", args)
+			refStr := strings.TrimPrefix(args, "ref_")
+			refID, err := strconv.ParseInt(refStr, 10, 64)
+			if err == nil && refID != u.TelegramID {
+				if !u.OnboardingCompleted && u.ReferrerID == 0 {
+					_, err = h.db.User.UpdateOne(u).SetReferrerID(refID).Save(ctx)
+					if err != nil {
+						slog.Error("Failed to set referrer", "user_id", u.TelegramID, "error", err)
+					}
+				}
+			}
 		}
 		
 		// Reset onboarding if requested via /start or first time
@@ -138,18 +153,29 @@ func (h *Handler) handleCommand(ctx context.Context, message *tgbotapi.Message, 
 		h.handleOnboarding(ctx, message, u)
 		return
 	case "help":
-		responseText = "📖 *How to use Pocka:*\n\n" +
-			"1. **Log Expense**: `amount description` or `description amount` (e.g., `100 lunch` or `taxi 50`).\n" +
-			"2. **Log Income**: Use keywords like `salary`, `sold`, or `bonus` (e.g., `salary 15000`).\n" +
-			"3. **Stats**: Send /stats for a weekly breakdown of your income, expenses, and net balance.\n\n" +
-			"It's that simple! No forms, no complex apps."
-	case "stats":
+		responseText = h.i18n.Translate(u.Language, "help_text")
+	case "share":
+		botUsername := "PockaaBot"
+		if h.bot.Self.UserName != "" {
+			botUsername = h.bot.Self.UserName
+		}
+		link := fmt.Sprintf("https://t.me/%s?start=ref_%d", botUsername, u.TelegramID)
+		responseText = h.i18n.Translate(u.Language, "share_text", link)
+	case "referrals":
+		count, err := h.db.User.Query().Where(user.ReferrerIDEQ(u.TelegramID)).Count(ctx)
+		if err != nil {
+			slog.Error("Error getting referrals", "user_id", u.TelegramID, "error", err)
+			responseText = h.i18n.Translate(u.Language, "error_not_understood")
+		} else {
+			responseText = h.i18n.Translate(u.Language, "referral_stats", count)
+		}
+	case "stats", "weekly":
 		stats, err := h.txnSvc.GetWeeklyStats(ctx, u.TelegramID)
 		if err != nil {
 			slog.Error("Error getting stats", "user_id", u.TelegramID, "error", err)
-			responseText = "❌ Sorry, I couldn't fetch your stats right now."
+			responseText = h.i18n.Translate(u.Language, "error_not_understood") // Fallback
 		} else {
-			responseText = formatStatsText(stats)
+			responseText = h.formatStatsText(stats, u.Language, "stats_header_weekly")
 		}
 		
 		msg := tgbotapi.NewMessage(message.Chat.ID, responseText)
@@ -157,14 +183,112 @@ func (h *Handler) handleCommand(ctx context.Context, message *tgbotapi.Message, 
 		
 		// Add "Generate Card" button if there are transactions
 		if stats != nil && stats.TotalExpense > 0 {
-			btn := tgbotapi.NewInlineKeyboardButtonData("Generate Shareable Card 🖼️", "generate_card")
+			btnText := h.i18n.Translate(u.Language, "generate_card_btn")
+			btn := tgbotapi.NewInlineKeyboardButtonData(btnText, "generate_card_weekly")
 			msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(tgbotapi.NewInlineKeyboardRow(btn))
 		}
 		
 		h.bot.Send(msg)
 		return
+	case "monthly":
+		stats, err := h.txnSvc.GetMonthlyStats(ctx, u.TelegramID)
+		if err != nil {
+			slog.Error("Error getting stats", "user_id", u.TelegramID, "error", err)
+			responseText = h.i18n.Translate(u.Language, "error_not_understood") // Fallback
+		} else {
+			responseText = h.formatStatsText(stats, u.Language, "stats_header_monthly")
+		}
+		
+		msg := tgbotapi.NewMessage(message.Chat.ID, responseText)
+		msg.ParseMode = tgbotapi.ModeMarkdown
+		
+		// Add "Generate Card" button if there are transactions
+		if stats != nil && stats.TotalExpense > 0 {
+			btnText := h.i18n.Translate(u.Language, "generate_card_btn")
+			btn := tgbotapi.NewInlineKeyboardButtonData(btnText, "generate_card_monthly")
+			msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(tgbotapi.NewInlineKeyboardRow(btn))
+		}
+		
+		h.bot.Send(msg)
+		return
+	case "export":
+		csvBytes, err := h.txnSvc.ExportDataCSV(ctx, u.TelegramID)
+		if err != nil {
+			slog.Error("Error exporting CSV", "user_id", u.TelegramID, "error", err)
+			responseText = h.i18n.Translate(u.Language, "error_not_understood")
+			msg := tgbotapi.NewMessage(message.Chat.ID, responseText)
+			h.bot.Send(msg)
+			return
+		}
+		file := tgbotapi.FileBytes{Name: "transactions.csv", Bytes: csvBytes}
+		doc := tgbotapi.NewDocument(message.Chat.ID, file)
+		doc.Caption = "Here is your full transaction history! 📁"
+		h.bot.Send(doc)
+		return
+	case "budget":
+		parts := strings.Fields(args)
+		if len(parts) == 0 {
+			responseText = "To set a budget, use: `/budget amount` or `/budget category amount`."
+		} else {
+			amountStr := parts[0]
+			category := ""
+			if len(parts) > 1 {
+				category = parts[0]
+				amountStr = parts[1]
+			}
+			amount, err := strconv.ParseFloat(amountStr, 64)
+			if err != nil {
+				responseText = "❌ Invalid amount."
+			} else {
+				b, _ := h.db.Budget.Query().Where(
+					budget.HasUserWith(user.IDEQ(u.ID)),
+					budget.CategoryEQ(category),
+				).Only(ctx)
+				if b != nil {
+					h.db.Budget.UpdateOne(b).SetAmount(amount).Save(ctx)
+				} else {
+					h.db.Budget.Create().SetUser(u).SetAmount(amount).SetCategory(category).Save(ctx)
+				}
+				if category == "" {
+					responseText = fmt.Sprintf("✅ Total monthly budget set to %.2f %s", amount, u.Currency)
+				} else {
+					responseText = fmt.Sprintf("✅ Budget for '%s' set to %.2f %s", category, amount, u.Currency)
+				}
+			}
+		}
+	case "search":
+		if args == "" {
+			responseText = "Please provide a search term. Example: `/search coffee`"
+		} else {
+			txs, err := h.db.Transaction.Query().
+				Where(
+					transaction.HasUserWith(user.IDEQ(u.ID)),
+					transaction.Or(
+						transaction.CategoryContainsFold(args),
+						transaction.DescriptionContainsFold(args),
+						transaction.MerchantContainsFold(args),
+					),
+				).Order(ent.Desc(transaction.FieldCreatedAt)).Limit(10).All(ctx)
+			
+			if err != nil || len(txs) == 0 {
+				responseText = "No transactions found matching your search."
+			} else {
+				var response strings.Builder
+				response.WriteString(fmt.Sprintf("🔍 *Search Results for '%s':*\n\n", args))
+				total := 0.0
+				for _, t := range txs {
+					date := t.CreatedAt.Format("Jan 02")
+					response.WriteString(fmt.Sprintf("• %s: *%.2f %s* — %s\n", date, t.Amount, t.Currency, t.Category))
+					if t.Type == transaction.TypeEXPENSE {
+						total += t.Amount
+					}
+				}
+				response.WriteString(fmt.Sprintf("\n*Total Spent (from top 10):* %.2f %s", total, u.Currency))
+				responseText = response.String()
+			}
+		}
 	default:
-		responseText = "I don't know that command."
+		responseText = h.i18n.Translate(u.Language, "unknown_command")
 	}
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, responseText)
@@ -174,11 +298,15 @@ func (h *Handler) handleCommand(ctx context.Context, message *tgbotapi.Message, 
 
 func (h *Handler) handleOnboarding(ctx context.Context, message *tgbotapi.Message, u *ent.User) {
 	state := core.OnboardingState(u.OnboardingState)
+	lang := u.Language
+	if lang == "" {
+		lang = "en"
+	}
 
 	switch state {
 	case core.OnboardingStateAwaitingName:
 		if message.IsCommand() {
-			msg := tgbotapi.NewMessage(message.Chat.ID, "👋 *Welcome to Pocka!*\n\nI'm your personal money assistant. To get started, what should I call you?\n\n_(You can type your name below)_")
+			msg := tgbotapi.NewMessage(message.Chat.ID, h.i18n.Translate(lang, "welcome_name"))
 			msg.ParseMode = tgbotapi.ModeMarkdown
 			h.bot.Send(msg)
 			return
@@ -194,20 +322,29 @@ func (h *Handler) handleOnboarding(ctx context.Context, message *tgbotapi.Messag
 			SetOnboardingState(string(core.OnboardingStateAwaitingLanguage)).
 			SaveX(ctx)
 
-		msg := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf("Nice to meet you, *%s*! 😊\n\nWhich language do you prefer?", name))
+		msg := tgbotapi.NewMessage(message.Chat.ID, h.i18n.Translate(lang, "nice_to_meet", name))
 		msg.ParseMode = tgbotapi.ModeMarkdown
 		msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
 			tgbotapi.NewKeyboardButtonRow(
 				tgbotapi.NewKeyboardButton("English 🇬🇧"),
 				tgbotapi.NewKeyboardButton("Amharic 🇪🇹"),
 			),
+			tgbotapi.NewKeyboardButtonRow(
+				tgbotapi.NewKeyboardButton("Tigrigna 🇪🇷/🇪🇹"),
+				tgbotapi.NewKeyboardButton("Afaan Oromo 🇪🇹"),
+			),
 		)
 		h.bot.Send(msg)
 
 	case core.OnboardingStateAwaitingLanguage:
-		lang := "en"
-		if strings.Contains(message.Text, "Amharic") {
+		lang = "en"
+		text := message.Text
+		if strings.Contains(text, "Amharic") || strings.Contains(text, "አማርኛ") || strings.Contains(text, "🇪🇹") && strings.Contains(text, "Amharic") {
 			lang = "am"
+		} else if strings.Contains(text, "Tigrigna") || strings.Contains(text, "ትግርኛ") {
+			lang = "ti"
+		} else if strings.Contains(text, "Oromo") || strings.Contains(text, "Afaan") {
+			lang = "om"
 		}
 
 		h.db.User.UpdateOne(u).
@@ -215,7 +352,7 @@ func (h *Handler) handleOnboarding(ctx context.Context, message *tgbotapi.Messag
 			SetOnboardingState(string(core.OnboardingStateAwaitingCurrency)).
 			SaveX(ctx)
 
-		msg := tgbotapi.NewMessage(message.Chat.ID, "Got it! And what currency do you use most?")
+		msg := tgbotapi.NewMessage(message.Chat.ID, h.i18n.Translate(lang, "currency_prompt"))
 		msg.ParseMode = tgbotapi.ModeMarkdown
 		msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
 			tgbotapi.NewKeyboardButtonRow(
@@ -236,14 +373,14 @@ func (h *Handler) handleOnboarding(ctx context.Context, message *tgbotapi.Messag
 			SetOnboardingState(string(core.OnboardingStateAwaitingContact)).
 			SaveX(ctx)
 
-		msg := tgbotapi.NewMessage(message.Chat.ID, "Almost there! 🚀\n\nCan you share your phone number? This helps secure your account and link your data if you switch devices.")
+		msg := tgbotapi.NewMessage(message.Chat.ID, h.i18n.Translate(lang, "contact_prompt"))
 		msg.ParseMode = tgbotapi.ModeMarkdown
 		
-		// Share Contact Button
-		btn := tgbotapi.NewKeyboardButtonContact("Share Phone Number 📱")
+		btnShare := tgbotapi.NewKeyboardButtonContact(h.i18n.Translate(lang, "share_contact_btn"))
+		btnSkip := tgbotapi.NewKeyboardButton(h.i18n.Translate(lang, "skip_btn"))
 		msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
-			tgbotapi.NewKeyboardButtonRow(btn),
-			tgbotapi.NewKeyboardButtonRow(tgbotapi.NewKeyboardButton("Skip for now ➡️")),
+			tgbotapi.NewKeyboardButtonRow(btnShare),
+			tgbotapi.NewKeyboardButtonRow(btnSkip),
 		)
 		h.bot.Send(msg)
 
@@ -251,7 +388,7 @@ func (h *Handler) handleOnboarding(ctx context.Context, message *tgbotapi.Messag
 		var phone string
 		if message.Contact != nil {
 			phone = message.Contact.PhoneNumber
-		} else if !strings.Contains(message.Text, "Skip") {
+		} else if !strings.Contains(message.Text, "Skip") && !strings.Contains(message.Text, "➡️") && !strings.Contains(message.Text, "ይለፍ") && !strings.Contains(message.Text, "dhiisi") && !strings.Contains(message.Text, "ሕለፍ") {
 			phone = message.Text
 		}
 
@@ -265,7 +402,7 @@ func (h *Handler) handleOnboarding(ctx context.Context, message *tgbotapi.Messag
 		
 		update.SaveX(ctx)
 
-		msg := tgbotapi.NewMessage(message.Chat.ID, "✨ *Onboarding Complete!*\n\nYou're all set to track your money. Just send me messages like:\n\n• `coffee 50`\n• `salary 15000`\n• `taxi 100`\n\nUse /stats anytime to see your summary. Let's grow! 🚀")
+		msg := tgbotapi.NewMessage(message.Chat.ID, h.i18n.Translate(lang, "onboarding_complete"))
 		msg.ParseMode = tgbotapi.ModeMarkdown
 		msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 		h.bot.Send(msg)
@@ -273,21 +410,21 @@ func (h *Handler) handleOnboarding(ctx context.Context, message *tgbotapi.Messag
 }
 
 func (h *Handler) handleText(ctx context.Context, message *tgbotapi.Message, u *ent.User) {
-	parsedList, err := h.txnSvc.LogTransaction(ctx, u.TelegramID, message.Text, u.Currency)
+	parsedList, alerts, err := h.txnSvc.LogTransaction(ctx, u.TelegramID, message.Text, u.Currency)
 	if err != nil {
 		slog.Warn("Failed to log transaction",
 			"user_id", u.TelegramID,
 			"input", message.Text,
 			"error", err,
 		)
-		msg := tgbotapi.NewMessage(message.Chat.ID, "❌ I couldn't understand that. Try something like `100 lunch` or `salary 5000`.")
+		msg := tgbotapi.NewMessage(message.Chat.ID, h.i18n.Translate(u.Language, "error_not_understood"))
 		msg.ParseMode = tgbotapi.ModeMarkdown
 		h.bot.Send(msg)
 		return
 	}
 
 	var response strings.Builder
-	response.WriteString("✅ *Saved:*\n")
+	response.WriteString(h.i18n.Translate(u.Language, "saved_header"))
 
 	for _, parsed := range parsedList {
 		// Use AI emoji if available, fallback to default icons
@@ -317,7 +454,11 @@ func (h *Handler) handleText(ctx context.Context, message *tgbotapi.Message, u *
 		}
 	}
 	if hasIncome {
-		response.WriteString("\n_Nice! Keep it coming!_ 🚀")
+		response.WriteString(h.i18n.Translate(u.Language, "nice_income"))
+	}
+
+	for _, alert := range alerts {
+		response.WriteString("\n\n" + alert)
 	}
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, response.String())
@@ -326,19 +467,35 @@ func (h *Handler) handleText(ctx context.Context, message *tgbotapi.Message, u *
 }
 
 func (h *Handler) handleCallback(ctx context.Context, query *tgbotapi.CallbackQuery) {
-	if query.Data == "generate_card" {
-		// 1. Get stats
-		stats, err := h.txnSvc.GetWeeklyStats(ctx, query.From.ID)
+	u, err := h.db.User.Query().Where(user.TelegramIDEQ(query.From.ID)).Only(ctx)
+	lang := "en"
+	if err == nil && u != nil && u.Language != "" {
+		lang = u.Language
+	}
+
+	if strings.HasPrefix(query.Data, "generate_card") {
+		var stats *core.SummaryStats
+		var err error
+		title := "Pocka Wrap"
+		
+		if query.Data == "generate_card_monthly" {
+			stats, err = h.txnSvc.GetMonthlyStats(ctx, query.From.ID)
+			title = "Pocka Monthly Wrap"
+		} else {
+			stats, err = h.txnSvc.GetWeeklyStats(ctx, query.From.ID)
+			title = "Pocka Weekly Wrap"
+		}
+
 		if err != nil {
 			slog.Error("Error getting stats for card", "user_id", query.From.ID, "error", err)
 			return
 		}
 
 		// 2. Ack the callback to remove loading state
-		h.bot.Send(tgbotapi.NewCallback(query.ID, "Generating your card... 🪄"))
+		h.bot.Send(tgbotapi.NewCallback(query.ID, h.i18n.Translate(lang, "generating_card")))
 
 		// 3. Generate image
-		imgBytes, err := h.reportSvc.GenerateWeeklyCard(ctx, stats)
+		imgBytes, err := h.reportSvc.GenerateSummaryCard(ctx, title, stats)
 		if err != nil {
 			slog.Error("Error generating card", "user_id", query.From.ID, "error", err)
 			return
@@ -350,23 +507,23 @@ func (h *Handler) handleCallback(ctx context.Context, query *tgbotapi.CallbackQu
 			Bytes: imgBytes,
 		}
 		photo := tgbotapi.NewPhoto(query.Message.Chat.ID, file)
-		photo.Caption = "Here is your weekly summary card! 📊 Share it with your friends to show off your financial discipline. 🚀"
+		photo.Caption = h.i18n.Translate(lang, "card_caption")
 		h.bot.Send(photo)
 	}
 }
 
-func formatStatsText(stats *core.WeeklyStats) string {
+func (h *Handler) formatStatsText(stats *core.SummaryStats, langCode string, headerKey string) string {
 	if stats == nil || (stats.TotalIncome == 0 && stats.TotalExpense == 0) {
-		return "You haven't logged any transactions in the last 7 days. Start by sending something like 'coffee 40'!"
+		return h.i18n.Translate(langCode, "stats_empty")
 	}
 
-	resp := "📊 *Weekly Summary (Last 7 Days)*\n\n"
-	resp += fmt.Sprintf("💰 Income: *%.2f %s*\n", stats.TotalIncome, stats.Currency)
-	resp += fmt.Sprintf("💸 Expense: *%.2f %s*\n", stats.TotalExpense, stats.Currency)
-	resp += fmt.Sprintf("⚖️ Net: *%.2f %s*\n\n", stats.NetBalance, stats.Currency)
+	resp := h.i18n.Translate(langCode, headerKey)
+	resp += h.i18n.Translate(langCode, "stats_income", stats.TotalIncome, stats.Currency)
+	resp += h.i18n.Translate(langCode, "stats_expense", stats.TotalExpense, stats.Currency)
+	resp += h.i18n.Translate(langCode, "stats_net", stats.NetBalance, stats.Currency)
 
 	if stats.TotalExpense > 0 {
-		resp += "*Top Expenses:*\n"
+		resp += h.i18n.Translate(langCode, "stats_top_expenses")
 		
 		// Sort categories
 		type catVal struct {
@@ -387,8 +544,8 @@ func formatStatsText(stats *core.WeeklyStats) string {
 		}
 	}
 
-	resp += fmt.Sprintf("\nStreak: %d days 🔥", stats.Streak)
-	resp += "\n\n_Keep tracking to maintain your streak!_"
+	resp += h.i18n.Translate(langCode, "stats_streak", stats.Streak)
+	resp += h.i18n.Translate(langCode, "stats_keep_tracking")
 
 	return resp
 }

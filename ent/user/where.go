@@ -91,9 +91,9 @@ func CurrentStreak(v int) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCurrentStreak, v))
 }
 
-// ReferredBy applies equality check predicate on the "referred_by" field. It's identical to ReferredByEQ.
-func ReferredBy(v uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldReferredBy, v))
+// ReferrerID applies equality check predicate on the "referrer_id" field. It's identical to ReferrerIDEQ.
+func ReferrerID(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldReferrerID, v))
 }
 
 // FullName applies equality check predicate on the "full_name" field. It's identical to FullNameEQ.
@@ -486,54 +486,54 @@ func CurrentStreakLTE(v int) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldCurrentStreak, v))
 }
 
-// ReferredByEQ applies the EQ predicate on the "referred_by" field.
-func ReferredByEQ(v uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldReferredBy, v))
+// ReferrerIDEQ applies the EQ predicate on the "referrer_id" field.
+func ReferrerIDEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldReferrerID, v))
 }
 
-// ReferredByNEQ applies the NEQ predicate on the "referred_by" field.
-func ReferredByNEQ(v uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldNEQ(FieldReferredBy, v))
+// ReferrerIDNEQ applies the NEQ predicate on the "referrer_id" field.
+func ReferrerIDNEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldReferrerID, v))
 }
 
-// ReferredByIn applies the In predicate on the "referred_by" field.
-func ReferredByIn(vs ...uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldIn(FieldReferredBy, vs...))
+// ReferrerIDIn applies the In predicate on the "referrer_id" field.
+func ReferrerIDIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldReferrerID, vs...))
 }
 
-// ReferredByNotIn applies the NotIn predicate on the "referred_by" field.
-func ReferredByNotIn(vs ...uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldNotIn(FieldReferredBy, vs...))
+// ReferrerIDNotIn applies the NotIn predicate on the "referrer_id" field.
+func ReferrerIDNotIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldReferrerID, vs...))
 }
 
-// ReferredByGT applies the GT predicate on the "referred_by" field.
-func ReferredByGT(v uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldGT(FieldReferredBy, v))
+// ReferrerIDGT applies the GT predicate on the "referrer_id" field.
+func ReferrerIDGT(v int64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldReferrerID, v))
 }
 
-// ReferredByGTE applies the GTE predicate on the "referred_by" field.
-func ReferredByGTE(v uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldGTE(FieldReferredBy, v))
+// ReferrerIDGTE applies the GTE predicate on the "referrer_id" field.
+func ReferrerIDGTE(v int64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldReferrerID, v))
 }
 
-// ReferredByLT applies the LT predicate on the "referred_by" field.
-func ReferredByLT(v uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldLT(FieldReferredBy, v))
+// ReferrerIDLT applies the LT predicate on the "referrer_id" field.
+func ReferrerIDLT(v int64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldReferrerID, v))
 }
 
-// ReferredByLTE applies the LTE predicate on the "referred_by" field.
-func ReferredByLTE(v uuid.UUID) predicate.User {
-	return predicate.User(sql.FieldLTE(FieldReferredBy, v))
+// ReferrerIDLTE applies the LTE predicate on the "referrer_id" field.
+func ReferrerIDLTE(v int64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldReferrerID, v))
 }
 
-// ReferredByIsNil applies the IsNil predicate on the "referred_by" field.
-func ReferredByIsNil() predicate.User {
-	return predicate.User(sql.FieldIsNull(FieldReferredBy))
+// ReferrerIDIsNil applies the IsNil predicate on the "referrer_id" field.
+func ReferrerIDIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldReferrerID))
 }
 
-// ReferredByNotNil applies the NotNil predicate on the "referred_by" field.
-func ReferredByNotNil() predicate.User {
-	return predicate.User(sql.FieldNotNull(FieldReferredBy))
+// ReferrerIDNotNil applies the NotNil predicate on the "referrer_id" field.
+func ReferrerIDNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldReferrerID))
 }
 
 // FullNameEQ applies the EQ predicate on the "full_name" field.
@@ -866,6 +866,29 @@ func HasTransactions() predicate.User {
 func HasTransactionsWith(preds ...predicate.Transaction) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newTransactionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBudgets applies the HasEdge predicate on the "budgets" edge.
+func HasBudgets() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BudgetsTable, BudgetsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBudgetsWith applies the HasEdge predicate on the "budgets" edge with a given conditions (other predicates).
+func HasBudgetsWith(preds ...predicate.Budget) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newBudgetsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

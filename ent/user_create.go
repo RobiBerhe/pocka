@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"pocka/ent/budget"
 	"pocka/ent/transaction"
 	"pocka/ent/user"
 	"time"
@@ -112,16 +113,16 @@ func (_c *UserCreate) SetNillableCurrentStreak(v *int) *UserCreate {
 	return _c
 }
 
-// SetReferredBy sets the "referred_by" field.
-func (_c *UserCreate) SetReferredBy(v uuid.UUID) *UserCreate {
-	_c.mutation.SetReferredBy(v)
+// SetReferrerID sets the "referrer_id" field.
+func (_c *UserCreate) SetReferrerID(v int64) *UserCreate {
+	_c.mutation.SetReferrerID(v)
 	return _c
 }
 
-// SetNillableReferredBy sets the "referred_by" field if the given value is not nil.
-func (_c *UserCreate) SetNillableReferredBy(v *uuid.UUID) *UserCreate {
+// SetNillableReferrerID sets the "referrer_id" field if the given value is not nil.
+func (_c *UserCreate) SetNillableReferrerID(v *int64) *UserCreate {
 	if v != nil {
-		_c.SetReferredBy(*v)
+		_c.SetReferrerID(*v)
 	}
 	return _c
 }
@@ -237,6 +238,21 @@ func (_c *UserCreate) AddTransactions(v ...*Transaction) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddTransactionIDs(ids...)
+}
+
+// AddBudgetIDs adds the "budgets" edge to the Budget entity by IDs.
+func (_c *UserCreate) AddBudgetIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddBudgetIDs(ids...)
+	return _c
+}
+
+// AddBudgets adds the "budgets" edges to the Budget entity.
+func (_c *UserCreate) AddBudgets(v ...*Budget) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBudgetIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -404,9 +420,9 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldCurrentStreak, field.TypeInt, value)
 		_node.CurrentStreak = value
 	}
-	if value, ok := _c.mutation.ReferredBy(); ok {
-		_spec.SetField(user.FieldReferredBy, field.TypeUUID, value)
-		_node.ReferredBy = &value
+	if value, ok := _c.mutation.ReferrerID(); ok {
+		_spec.SetField(user.FieldReferrerID, field.TypeInt64, value)
+		_node.ReferrerID = value
 	}
 	if value, ok := _c.mutation.FullName(); ok {
 		_spec.SetField(user.FieldFullName, field.TypeString, value)
@@ -441,6 +457,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BudgetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BudgetsTable,
+			Columns: []string{user.BudgetsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(budget.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
