@@ -17,28 +17,28 @@ help:
 
 # Docker commands
 up:
-	docker-compose up -d --build
+	docker compose up -d --build
 
 down:
-	docker-compose down
+	docker compose down
 
 restart:
-	docker-compose restart
+	docker compose restart
 
 build:
-	docker-compose build
+	docker compose build
 
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 ps:
-	docker-compose ps
+	docker compose ps
 
 clean:
-	docker-compose down --rmi all --volumes --remove-orphans
+	docker compose down --rmi all --volumes --remove-orphans
 
 db-shell:
-	docker-compose exec db psql -U pocka_user -d pocka_db
+	docker compose exec db psql -U pocka_user -d pocka_db
 
 # Development commands
 ent-gen:
